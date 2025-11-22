@@ -1,9 +1,9 @@
 type: environment
 model: environment
-id: ev_2RnT24Ja2r
-workspaceId: wk_TthDyJkbsZ
+id: ev_local
+workspaceId: wk_gamma
 createdAt: 2025-11-22T11:34:34.326349
-updatedAt: 2025-11-22T11:39:47.240836
+updatedAt: 2025-11-22T16:07:59.909320
 name: local
 public: true
 base: false
@@ -11,7 +11,7 @@ parentModel: environment
 parentId: null
 variables:
 - enabled: true
-  name: BASE_RL
+  name: BASE_URL
   value: http://localhost:8080
   id: DUrEPtbJ6U
 color: var(--info)

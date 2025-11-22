@@ -1,0 +1,26 @@
+type: http_request
+model: http_request
+id: rq_create_todo
+createdAt: 2025-11-22T16:34:59.003930
+updatedAt: 2025-11-22T16:39:06.567872
+workspaceId: wk_gamma
+folderId: fl_todos
+authentication: {}
+authenticationType: null
+body:
+  text: |-
+    {
+      "task": "Buy milk"
+    }
+bodyType: application/json
+description: ''
+headers:
+- enabled: true
+  name: Content-Type
+  value: application/json
+  id: khf6exnpjQ
+method: POST
+name: Create Todo
+sortPriority: 1.0
+url: ${[ BASE_URL ]}/todos
+urlParameters: []

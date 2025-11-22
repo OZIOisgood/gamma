@@ -1,0 +1,18 @@
+type: http_request
+model: http_request
+id: rq_list_todos
+createdAt: 2025-11-22T16:06:50.601683
+updatedAt: 2025-11-22T16:34:28.192784
+workspaceId: wk_gamma
+folderId: fl_todos
+authentication: {}
+authenticationType: null
+body: {}
+bodyType: null
+description: ''
+headers: []
+method: GET
+name: List Todos
+sortPriority: 0.0
+url: ${[ BASE_URL ]}/todos
+urlParameters: []

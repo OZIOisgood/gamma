@@ -1,0 +1,18 @@
+type: http_request
+model: http_request
+id: rq_get_todo
+createdAt: 2025-11-22T16:34:59.003930
+updatedAt: 2025-11-22T16:39:06.567872
+workspaceId: wk_gamma
+folderId: fl_todos
+authentication: {}
+authenticationType: null
+body: {}
+bodyType: null
+description: ''
+headers: []
+method: GET
+name: Get Todo
+sortPriority: 2.0
+url: ${[ BASE_URL ]}/todos/1
+urlParameters: []

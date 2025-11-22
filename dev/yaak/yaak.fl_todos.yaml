@@ -1,0 +1,13 @@
+type: folder
+model: folder
+id: fl_todos
+createdAt: 2025-11-22T16:28:24.426413
+updatedAt: 2025-11-22T16:34:44.839926
+workspaceId: wk_gamma
+folderId: null
+authentication: {}
+authenticationType: null
+description: ''
+headers: []
+name: todos
+sortPriority: 1000.0

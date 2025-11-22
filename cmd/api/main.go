@@ -1,33 +1,32 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-	"github.com/joho/godotenv"
+	"github.com/OZIOisgood/gamma/internal/api"
+	"github.com/OZIOisgood/gamma/internal/tools"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func main() {
-	if err := godotenv.Load(); err != nil {
-		log.Fatal("No .env file found")
+	tools.PrintBanner()
+	tools.LoadEnv()
+
+	dbURL := tools.GetEnv("DB_URL")
+
+	ctx := context.Background()
+	pool, err := pgxpool.New(ctx, dbURL)
+	if err != nil {
+		log.Fatalf("Unable to connect to database: %v\n", err)
 	}
+	defer pool.Close()
 
-	r := chi.NewRouter()
-
-	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
-	r.Use(middleware.StripSlashes)
-
-	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte(`{"status":"ok"}`))
-	})
+	srv := api.NewServer(pool)
 
 	log.Println("Gamma API listening on :8080")
-	if err := http.ListenAndServe(":8080", r); err != nil {
-			log.Fatal(err)
+	if err := http.ListenAndServe(":8080", srv.Router); err != nil {
+		log.Fatal(err)
 	}
 }

@@ -1,0 +1,18 @@
+type: http_request
+model: http_request
+id: rq_delete_todo
+createdAt: 2025-11-22T16:34:59.003930
+updatedAt: 2025-11-22T16:39:06.567872
+workspaceId: wk_gamma
+folderId: fl_todos
+authentication: {}
+authenticationType: null
+body: {}
+bodyType: null
+description: ''
+headers: []
+method: DELETE
+name: Delete Todo
+sortPriority: 4.0
+url: ${[ BASE_URL ]}/todos/1
+urlParameters: []

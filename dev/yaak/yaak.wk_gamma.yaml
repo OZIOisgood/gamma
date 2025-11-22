@@ -1,13 +1,13 @@
 type: workspace
 model: workspace
-id: wk_TthDyJkbsZ
+id: wk_gamma
 createdAt: 2025-11-22T11:23:09.464238
 updatedAt: 2025-11-22T11:23:09.464239
 authentication: {}
 authenticationType: null
 description: ''
 headers: []
-name: Yaak
+name: Gamma
 encryptionKeyChallenge: null
 settingValidateCertificates: true
 settingFollowRedirects: true
