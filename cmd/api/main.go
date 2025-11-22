@@ -1,11 +1,11 @@
 package main
 
 import (
-  "log"
-  "net/http"
+	"log"
+	"net/http"
 
-  "github.com/go-chi/chi/v5"
-  "github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 func main() {
@@ -13,6 +13,7 @@ func main() {
 
   r.Use(middleware.Logger)
   r.Use(middleware.Recoverer)
+  r.Use(middleware.StripSlashes)
 
   r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
     w.Header().Set("Content-Type", "application/json")
