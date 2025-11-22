@@ -1,2 +1,6 @@
+# Infra volumes
 /infra/pgdata
 /infra/minio-data
+
+# Environment files
+.env
