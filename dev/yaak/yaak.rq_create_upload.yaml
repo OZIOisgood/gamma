@@ -1,26 +1,23 @@
 type: http_request
 model: http_request
-id: rq_create_todo
-createdAt: 2025-11-22T16:34:59.003930
-updatedAt: 2025-11-22T16:39:06.567872
+id: rq_upload_video
+createdAt: 2025-11-22T17:00:00
+updatedAt: 2025-11-22T22:49:05.846414
 workspaceId: wk_gamma
-folderId: fl_todos
+folderId: fl_videos
 authentication: {}
 authenticationType: null
 body:
-  text: |-
-    {
-      "task": "Buy milk"
-    }
+  text: "{\n\t\"filename\": \"test_video.mp4\"\n}"
 bodyType: application/json
 description: ''
 headers:
 - enabled: true
   name: Content-Type
   value: application/json
-  id: khf6exnpjQ
+  id: xM6sDwU7Yq
 method: POST
-name: Create Todo
-sortPriority: 1.0
-url: ${[ BASE_URL ]}/todos
+name: Create Upload
+sortPriority: 0.0
+url: ${[BASE_URL]}/uploads
 urlParameters: []

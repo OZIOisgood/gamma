@@ -1,0 +1,17 @@
+type: grpc_request
+model: grpc_request
+id: gr_JXsNR7JFSo
+createdAt: 2025-11-22T21:37:59.918506
+updatedAt: 2025-11-22T21:37:59.918507
+workspaceId: wk_gamma
+folderId: null
+authenticationType: null
+authentication: {}
+description: ''
+message: ''
+metadata: []
+method: null
+name: ''
+service: null
+sortPriority: -1763847479915.0
+url: ''

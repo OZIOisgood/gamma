@@ -1,0 +1,18 @@
+type: http_request
+model: http_request
+id: rq_get_video
+createdAt: 2025-11-22T17:00:00
+updatedAt: 2025-11-22T21:20:31.134562
+workspaceId: wk_gamma
+folderId: fl_videos
+authentication: {}
+authenticationType: null
+body: {}
+bodyType: null
+description: ''
+headers: []
+method: GET
+name: Get Upload
+sortPriority: 20.0
+url: ${[BASE_URL]}/uploads/YOUR_UPLOAD_ID_HERE
+urlParameters: []

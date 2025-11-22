@@ -1,0 +1,55 @@
+type: http_request
+model: http_request
+id: rq_zfsXWM5yde
+createdAt: 2025-11-22T22:40:18.121995
+updatedAt: 2025-11-22T22:50:47.864978
+workspaceId: wk_gamma
+folderId: fl_videos
+authentication: {}
+authenticationType: null
+body:
+  filePath: /Users/test/Documents/gamma/test_video.mp4
+bodyType: binary
+description: ''
+headers:
+- enabled: true
+  name: Content-Type
+  value: video/mp4
+  id: eQ9ng70620
+method: PUT
+name: Upload file directly
+sortPriority: 0.0
+url: ${[ response.body.path(request='rq_upload_video', path=b64'JC51cGxvYWRfdXJs', behavior='always') ]}
+urlParameters:
+- enabled: false
+  name: X-Amz-Algorithm
+  value: AWS4-HMAC-SHA256
+  id: DpT49Ct03x
+- enabled: false
+  name: X-Amz-Credential
+  value: minio/20251122/us-east-1/s3/aws4_request
+  id: VBupRUmGdc
+- enabled: false
+  name: X-Amz-Date
+  value: 20251122T224142Z
+  id: PHwTQX3pKh
+- enabled: false
+  name: X-Amz-Expires
+  value: '900'
+  id: MmJyjPzVJW
+- enabled: false
+  name: X-Amz-SignedHeaders
+  value: host
+  id: MyumVAQHX2
+- enabled: false
+  name: x-id
+  value: PutObject
+  id: r4qJes2aUa
+- enabled: false
+  name: X-Amz-Signature
+  value: 601b4b1db496117e057903ab8216dccace2ac12eff8b5be9f7dd964c565a0ed2
+  id: FG9xTUmhPG
+- enabled: true
+  name: ''
+  value: ''
+  id: aNKws8SmxS
