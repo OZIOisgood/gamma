@@ -20,10 +20,11 @@ services:
     environment:
       MINIO_ROOT_USER: minio
       MINIO_ROOT_PASSWORD: minio123
-      # Configure Webhook Notification Target with ID "gamma"
-      MINIO_NOTIFY_WEBHOOK_ENABLE_gamma: "on"
-      # Point to the host machine's API (host.docker.internal works on macOS/Windows)
-      MINIO_NOTIFY_WEBHOOK_ENDPOINT_gamma: "http://host.docker.internal:8080/webhooks/minio"
+      # Configure NATS Notification Target with ID "gamma"
+      MINIO_NOTIFY_NATS_ENABLE_gamma: "on"
+      MINIO_NOTIFY_NATS_ADDRESS_gamma: "gamma-nats:4222"
+      MINIO_NOTIFY_NATS_SUBJECT_gamma: "gamma.minio.uploaded"
+      MINIO_NOTIFY_NATS_FORMAT_gamma: "access"
     ports:
       - "9000:9000"   # S3 API
       - "9090:9090"   # Web UI

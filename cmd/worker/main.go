@@ -1,14 +1,17 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/OZIOisgood/gamma/internal/db"
 	"github.com/OZIOisgood/gamma/internal/events"
 	"github.com/OZIOisgood/gamma/internal/tools"
-	"github.com/nats-io/nats.go"
+	"github.com/OZIOisgood/gamma/internal/worker"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func main() {
@@ -19,6 +22,8 @@ func main() {
 		natsURL = "nats://localhost:4222"
 	}
 
+	dbURL := tools.GetEnv("DB_URL")
+
 	workerName := os.Getenv("WORKER_NAME")
 	if workerName == "" {
 		workerName = "worker-1"
@@ -26,19 +31,30 @@ func main() {
 
 	log.Printf("Starting worker: %s", workerName)
 
+	ctx := context.Background()
+	pool, err := pgxpool.New(ctx, dbURL)
+	if err != nil {
+		log.Fatalf("Unable to connect to database: %v", err)
+	}
+	defer pool.Close()
+
+	queries := db.New(pool)
+	handler := worker.NewHandler(queries, workerName)
+
 	eventBus, err := events.NewEventBus(natsURL)
 	if err != nil {
 		log.Fatalf("Unable to connect to NATS: %v", err)
 	}
 	defer eventBus.Close()
 
-	// Subscribe to uploads.uploaded events
-	// We use a queue group "transcoding-workers" so that if we run multiple workers,
-	// the work is distributed among them.
-	_, err = eventBus.Subscribe("uploads.uploaded", "transcoding-workers", func(msg *nats.Msg) {
-		log.Printf("[%s] Received message on %s: %s", workerName, msg.Subject, string(msg.Data))
-		msg.Ack()
-	})
+	// Ensure stream exists for MinIO events
+	// MinIO publishes to subjects like "gamma.minio.uploaded"
+	if err := eventBus.EnsureStream("GAMMA_MINIO", []string{"gamma.minio.>"}); err != nil {
+		log.Fatalf("Failed to ensure NATS stream: %v", err)
+	}
+
+	// Subscribe to MinIO upload events
+	_, err = eventBus.Subscribe("gamma.minio.uploaded", "transcoding-workers", handler.HandleUploadEvent)
 	if err != nil {
 		log.Fatalf("Failed to subscribe: %v", err)
 	}

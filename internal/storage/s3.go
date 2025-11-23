@@ -71,10 +71,10 @@ func (s *Storage) EnsureBucketExists(ctx context.Context) error {
 }
 
 func (s *Storage) EnsureBucketNotification(ctx context.Context) error {
-	// Define the ARN for the webhook target configured in MinIO
-	// Format: arn:minio:sqs::<REGION>:<ID>:webhook
+	// Define the ARN for the NATS target configured in MinIO
+	// Format: arn:minio:sqs::<REGION>:<ID>:nats
 	// We used ID "gamma" in docker-compose
-	arn := "arn:minio:sqs::gamma:webhook"
+	arn := "arn:minio:sqs::gamma:nats"
 
 	_, err := s.Client.PutBucketNotificationConfiguration(ctx, &s3.PutBucketNotificationConfigurationInput{
 		Bucket: aws.String(s.Bucket),

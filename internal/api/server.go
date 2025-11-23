@@ -6,26 +6,22 @@ import (
 	"time"
 
 	"github.com/OZIOisgood/gamma/internal/db"
-	"github.com/OZIOisgood/gamma/internal/events"
 	"github.com/OZIOisgood/gamma/internal/storage"
 	"github.com/OZIOisgood/gamma/internal/uploads"
-	"github.com/OZIOisgood/gamma/internal/webhooks"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Server struct {
-	Router   *chi.Mux
-	Pool     *pgxpool.Pool
-	EventBus *events.EventBus
+	Router *chi.Mux
+	Pool   *pgxpool.Pool
 }
 
-func NewServer(pool *pgxpool.Pool, eventBus *events.EventBus) *Server {
+func NewServer(pool *pgxpool.Pool) *Server {
 	s := &Server{
-		Router:   chi.NewRouter(),
-		Pool:     pool,
-		EventBus: eventBus,
+		Router: chi.NewRouter(),
+		Pool:   pool,
 	}
 	s.routes()
 	return s
@@ -41,9 +37,6 @@ func (s *Server) routes() {
 
 	uploadsHandler := uploads.NewHandler(storageService, queries)
 	uploadsHandler.RegisterRoutes(s.Router)
-
-	webhooksHandler := webhooks.NewHandler(queries, s.EventBus)
-	webhooksHandler.RegisterRoutes(s.Router)
 }
 
 func (s *Server) initStorage() *storage.Storage {
@@ -53,7 +46,6 @@ func (s *Server) initStorage() *storage.Storage {
 	}
 
 	// Run notification setup in background
-	// MinIO validates the webhook endpoint immediately, so the server must be running first.
 	go func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
