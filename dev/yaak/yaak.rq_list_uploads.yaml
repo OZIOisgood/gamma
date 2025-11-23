@@ -1,16 +1,18 @@
 type: http_request
 model: http_request
 id: rq_list_videos
+createdAt: 2025-11-22T17:00:00
+updatedAt: 2025-11-23T16:46:42.471112
 workspaceId: wk_gamma
 folderId: fl_videos
-createdAt: 2025-11-22T17:00:00.000000
-updatedAt: 2025-11-22T17:00:00.000000
-name: List Uploads
-method: GET
-url: ${[BASE_URL]}/uploads
-sortPriority: 10
-parameters: []
-headers: []
 authentication: {}
 authenticationType: null
 body: {}
+bodyType: null
+description: ''
+headers: []
+method: GET
+name: List Uploads
+sortPriority: 6.666666666666667
+url: ${[BASE_URL]}/uploads
+urlParameters: []

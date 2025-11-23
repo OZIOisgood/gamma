@@ -9,6 +9,7 @@ import (
 
 	"github.com/OZIOisgood/gamma/internal/db"
 	"github.com/OZIOisgood/gamma/internal/events"
+	"github.com/OZIOisgood/gamma/internal/storage"
 	"github.com/OZIOisgood/gamma/internal/tools"
 	"github.com/OZIOisgood/gamma/internal/worker"
 	"github.com/fatih/color"
@@ -41,7 +42,8 @@ func main() {
 	defer pool.Close()
 
 	queries := db.New(pool)
-	handler := worker.NewHandler(queries, workerName)
+	store := storage.New()
+	handler := worker.NewHandler(queries, store, workerName)
 
 	eventBus, err := events.NewEventBus(natsURL)
 	if err != nil {

@@ -29,6 +29,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Post("/uploads", h.CreateUpload)
 	r.Get("/uploads", h.List)
 	r.Get("/uploads/{id}", h.Get)
+	r.Get("/assets/{id}", h.GetAsset)
 }
 
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
@@ -86,11 +87,14 @@ func (h *Handler) CreateUpload(w http.ResponseWriter, r *http.Request) {
 	// Generate a unique ID for the video
 	videoID := uuid.New()
 	ext := filepath.Ext(req.Filename)
-	key := fmt.Sprintf("raw/%s%s", videoID.String(), ext)
+	if ext == "" {
+		ext = ".mp4"
+	}
+	key := fmt.Sprintf("original/%s%s", videoID.String(), ext)
 
 	// Generate presigned URL
 	ctx := r.Context()
-	uploadURL, err := h.Storage.GetPresignedURL(ctx, key)
+	uploadURL, err := h.Storage.GeneratePresignedPutURL(ctx, key)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to generate upload URL: %v", err), http.StatusInternalServerError)
 		return
@@ -98,13 +102,10 @@ func (h *Handler) CreateUpload(w http.ResponseWriter, r *http.Request) {
 
 	// Save to database
 	var pgUUID pgtype.UUID
-	err = pgUUID.Scan(videoID.String())
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to parse UUID: %v", err), http.StatusInternalServerError)
-		return
-	}
+	pgUUID.Scan(videoID.String())
 
 	_, err = h.Queries.CreateUpload(ctx, db.CreateUploadParams{
+
 		ID:     pgUUID,
 		Title:  req.Filename,
 		S3Key:  key,
@@ -115,10 +116,35 @@ func (h *Handler) CreateUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(CreateUploadResponse{
+	resp := CreateUploadResponse{
 		ID:        videoID.String(),
 		UploadURL: uploadURL,
 		Key:       key,
-	})
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
+}
+
+func (h *Handler) GetAsset(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	var pgUUID pgtype.UUID
+	err := pgUUID.Scan(idStr)
+	if err != nil {
+		http.Error(w, "Invalid UUID", http.StatusBadRequest)
+		return
+	}
+
+	asset, err := h.Queries.GetAsset(r.Context(), pgUUID)
+	if err != nil {
+		// Try to find by upload ID as well, just in case user passed upload ID
+		asset, err = h.Queries.GetAssetByUploadID(r.Context(), pgUUID)
+		if err != nil {
+			http.Error(w, "Asset not found", http.StatusNotFound)
+			return
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(asset)
 }

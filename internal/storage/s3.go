@@ -3,7 +3,9 @@ package storage
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
+	"os"
 
 	"github.com/OZIOisgood/gamma/internal/tools"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -89,8 +91,8 @@ func (s *Storage) EnsureBucketNotification(ctx context.Context) error {
 						Key: &types.S3KeyFilter{
 							FilterRules: []types.FilterRule{
 								{
-									Name:  types.FilterRuleNameSuffix,
-									Value: aws.String(".mp4"),
+									Name:  types.FilterRuleNamePrefix,
+									Value: aws.String("original/"),
 								},
 							},
 						},
@@ -105,7 +107,7 @@ func (s *Storage) EnsureBucketNotification(ctx context.Context) error {
 	return nil
 }
 
-func (s *Storage) GetPresignedURL(ctx context.Context, key string) (string, error) {
+func (s *Storage) GeneratePresignedPutURL(ctx context.Context, key string) (string, error) {
 	req, err := s.PresignClient.PresignPutObject(ctx, &s3.PutObjectInput{
 		Bucket: aws.String(s.Bucket),
 		Key:    aws.String(key),
@@ -114,4 +116,51 @@ func (s *Storage) GetPresignedURL(ctx context.Context, key string) (string, erro
 		return "", fmt.Errorf("failed to generate presigned URL: %w", err)
 	}
 	return req.URL, nil
+}
+
+func (s *Storage) DownloadFile(ctx context.Context, key string, destPath string) error {
+	// Create the file
+	out, err := os.Create(destPath)
+	if err != nil {
+		return fmt.Errorf("failed to create file: %w", err)
+	}
+	defer out.Close()
+
+	// Get the object
+	resp, err := s.Client.GetObject(ctx, &s3.GetObjectInput{
+		Bucket: aws.String(s.Bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to download file: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Write the body to file
+	_, err = io.Copy(out, resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to write to file: %w", err)
+	}
+
+	return nil
+}
+
+func (s *Storage) UploadFile(ctx context.Context, key string, srcPath string, contentType string) error {
+	file, err := os.Open(srcPath)
+	if err != nil {
+		return fmt.Errorf("failed to open file: %w", err)
+	}
+	defer file.Close()
+
+	_, err = s.Client.PutObject(ctx, &s3.PutObjectInput{
+		Bucket:      aws.String(s.Bucket),
+		Key:         aws.String(key),
+		Body:        file,
+		ContentType: aws.String(contentType),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to upload file: %w", err)
+	}
+
+	return nil
 }
