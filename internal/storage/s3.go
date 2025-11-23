@@ -27,6 +27,7 @@ func New() *Storage {
 	secretKey := tools.GetEnv("S3_SECRET_KEY")
 	bucket := tools.GetEnv("S3_BUCKET")
 	region := tools.GetEnv("S3_REGION")
+	externalEndpoint := os.Getenv("S3_EXTERNAL_ENDPOINT")
 
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
 		config.WithRegion(region),
@@ -45,7 +46,29 @@ func New() *Storage {
 	}
 
 	client := s3.NewFromConfig(cfg)
-	presignClient := s3.NewPresignClient(client)
+
+	// If external endpoint is provided, use it for presigning
+	var presignClient *s3.PresignClient
+	if externalEndpoint != "" {
+		externalCfg, err := config.LoadDefaultConfig(context.TODO(),
+			config.WithRegion(region),
+			config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKey, secretKey, "")),
+			config.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(
+				func(service, region string, options ...interface{}) (aws.Endpoint, error) {
+					return aws.Endpoint{
+						URL:               externalEndpoint,
+						HostnameImmutable: true,
+					}, nil
+				},
+			)),
+		)
+		if err != nil {
+			log.Fatalf("unable to load external SDK config, %v", err)
+		}
+		presignClient = s3.NewPresignClient(s3.NewFromConfig(externalCfg))
+	} else {
+		presignClient = s3.NewPresignClient(client)
+	}
 
 	return &Storage{
 		Client:        client,

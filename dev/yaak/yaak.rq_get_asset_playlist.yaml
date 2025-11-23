@@ -2,9 +2,9 @@ type: http_request
 model: http_request
 id: rq_get_asset_playlist
 createdAt: 2025-11-23T12:00:00
-updatedAt: 2025-11-23T19:02:23.211762
+updatedAt: 2025-11-23T21:50:50.413864
 workspaceId: wk_gamma
-folderId: fl_videos
+folderId: fl_assets
 authentication: {}
 authenticationType: null
 body: {}
@@ -14,5 +14,5 @@ headers: []
 method: GET
 name: Get Asset Playlist
 sortPriority: 40.0
-url: ${[BASE_URL]}/assets/fc544ed5-f944-444d-9128-4cd0c17955b1/playlist
+url: ${[BASE_URL]}/assets/${[ response.body.path(request='rq_list_assets', path=b64'JFswXS5JRA', behavior='smart') ]}/playlist
 urlParameters: []

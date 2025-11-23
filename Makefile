@@ -16,7 +16,7 @@ run-worker:
 	go run ./cmd/worker
 
 docker-up:
-	docker-compose -f ./infra/docker-compose.yml up -d
+	docker-compose -f ./infra/docker-compose.yml up -d --build
 
 docker-down:
 	docker-compose -f ./infra/docker-compose.yml down
@@ -28,7 +28,7 @@ docker-restart:
 	$(MAKE) docker-clean
 	$(MAKE) docker-up
 	@echo "Waiting for database to be ready..."
-	@sleep 5
+	@sleep 2
 	$(MAKE) migrate-up
 
 sqlc:

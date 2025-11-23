@@ -2,9 +2,9 @@ type: http_request
 model: http_request
 id: rq_list_assets
 createdAt: 2025-11-23T12:00:00
-updatedAt: 2025-11-23T18:58:53.334187
+updatedAt: 2025-11-23T21:45:44.296573
 workspaceId: wk_gamma
-folderId: fl_videos
+folderId: fl_assets
 authentication: {}
 authenticationType: null
 body: {}

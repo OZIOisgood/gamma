@@ -4,7 +4,7 @@ id: rq_get_asset
 createdAt: 2025-11-23T12:00:00
 updatedAt: 2025-11-23T18:59:20.111612
 workspaceId: wk_gamma
-folderId: fl_videos
+folderId: fl_assets
 authentication: {}
 authenticationType: null
 body: {}

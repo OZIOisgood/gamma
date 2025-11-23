@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/OZIOisgood/gamma/internal/auth"
 	"github.com/OZIOisgood/gamma/internal/db"
 	"github.com/OZIOisgood/gamma/internal/storage"
 	"github.com/OZIOisgood/gamma/internal/uploads"
@@ -32,11 +33,18 @@ func (s *Server) routes() {
 	s.Router.Use(middleware.Recoverer)
 	s.Router.Use(middleware.StripSlashes)
 
+	s.Router.Post("/auth/login", auth.Login)
+	s.Router.Post("/auth/logout", auth.Logout)
+
 	queries := db.New(s.Pool)
 	storageService := s.initStorage()
 
 	uploadsHandler := uploads.NewHandler(storageService, queries)
-	uploadsHandler.RegisterRoutes(s.Router)
+
+	s.Router.Group(func(r chi.Router) {
+		r.Use(auth.Middleware)
+		uploadsHandler.RegisterRoutes(r)
+	})
 }
 
 func (s *Server) initStorage() *storage.Storage {

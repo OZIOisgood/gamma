@@ -1,0 +1,23 @@
+type: http_request
+model: http_request
+id: rq_login
+createdAt: 2025-11-23T19:30:00
+updatedAt: 2025-11-23T21:10:16.682092
+workspaceId: wk_gamma
+folderId: fl_auth
+authentication: {}
+authenticationType: null
+body:
+  text: "{\n\t\"username\": \"admin\",\n\t\"password\": \"password\"\n}"
+bodyType: application/json
+description: ''
+headers:
+- enabled: true
+  name: Content-Type
+  value: application/json
+  id: xM6sDwU7Yq
+method: POST
+name: Login
+sortPriority: 0.0
+url: ${[ BASE_URL ]}/auth/login
+urlParameters: []

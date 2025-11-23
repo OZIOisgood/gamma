@@ -1,0 +1,8 @@
+type: folder
+model: folder
+id: fl_auth
+workspaceId: wk_gamma
+createdAt: 2025-11-23T19:30:00.000000
+updatedAt: 2025-11-23T19:30:00.000000
+name: Auth
+sortPriority: 0
