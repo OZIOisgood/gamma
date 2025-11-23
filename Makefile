@@ -14,6 +14,9 @@ docker-up:
 docker-down:
 	docker-compose -f ./infra/docker-compose.yml down
 
+docker-clean:
+	docker-compose -f ./infra/docker-compose.yml down -v
+
 sqlc:
 	sqlc generate
 
@@ -29,3 +32,4 @@ migrate-down:
 
 migrate-reset:
 	migrate -path db/migrations -database "$(DB_URL)" down
+

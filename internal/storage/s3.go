@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 )
 
 type Storage struct {
@@ -69,6 +70,40 @@ func (s *Storage) EnsureBucketExists(ctx context.Context) error {
 	return nil
 }
 
+func (s *Storage) EnsureBucketNotification(ctx context.Context) error {
+	// Define the ARN for the webhook target configured in MinIO
+	// Format: arn:minio:sqs::<REGION>:<ID>:webhook
+	// We used ID "gamma" in docker-compose
+	arn := "arn:minio:sqs::gamma:webhook"
+
+	_, err := s.Client.PutBucketNotificationConfiguration(ctx, &s3.PutBucketNotificationConfigurationInput{
+		Bucket: aws.String(s.Bucket),
+		NotificationConfiguration: &types.NotificationConfiguration{
+			QueueConfigurations: []types.QueueConfiguration{
+				{
+					QueueArn: aws.String(arn),
+					Events: []types.Event{
+						types.EventS3ObjectCreatedPut,
+					},
+					Filter: &types.NotificationConfigurationFilter{
+						Key: &types.S3KeyFilter{
+							FilterRules: []types.FilterRule{
+								{
+									Name:  types.FilterRuleNameSuffix,
+									Value: aws.String(".mp4"),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("failed to set bucket notification: %w", err)
+	}
+	return nil
+}
 
 func (s *Storage) GetPresignedURL(ctx context.Context, key string) (string, error) {
 	req, err := s.PresignClient.PresignPutObject(ctx, &s3.PutObjectInput{

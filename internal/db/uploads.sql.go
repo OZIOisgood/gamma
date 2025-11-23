@@ -93,3 +93,29 @@ func (q *Queries) ListUploads(ctx context.Context) ([]Upload, error) {
 	}
 	return items, nil
 }
+
+const updateUploadStatusByKey = `-- name: UpdateUploadStatusByKey :one
+UPDATE uploads
+SET status = $2, updated_at = NOW()
+WHERE s3_key = $1
+RETURNING id, title, s3_key, status, created_at, updated_at
+`
+
+type UpdateUploadStatusByKeyParams struct {
+	S3Key  string
+	Status UploadStatus
+}
+
+func (q *Queries) UpdateUploadStatusByKey(ctx context.Context, arg UpdateUploadStatusByKeyParams) (Upload, error) {
+	row := q.db.QueryRow(ctx, updateUploadStatusByKey, arg.S3Key, arg.Status)
+	var i Upload
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.S3Key,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
