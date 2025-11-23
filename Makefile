@@ -4,9 +4,13 @@ export
 build:
 	@mkdir -p bin
 	go build -o bin/api ./cmd/api
+	go build -o bin/worker ./cmd/worker
 
-run:
+run-api:
 	go run ./cmd/api
+
+run-worker:
+	go run ./cmd/worker
 
 docker-up:
 	docker-compose -f ./infra/docker-compose.yml up -d
@@ -16,6 +20,13 @@ docker-down:
 
 docker-clean:
 	docker-compose -f ./infra/docker-compose.yml down -v
+
+docker-restart:
+	$(MAKE) docker-clean
+	$(MAKE) docker-up
+	@echo "Waiting for database to be ready..."
+	@sleep 5
+	$(MAKE) migrate-up
 
 sqlc:
 	sqlc generate

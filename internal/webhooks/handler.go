@@ -2,22 +2,26 @@ package webhooks
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
 	"strings"
 
 	"github.com/OZIOisgood/gamma/internal/db"
+	"github.com/OZIOisgood/gamma/internal/events"
 	"github.com/go-chi/chi/v5"
 )
 
 type Handler struct {
-	Queries *db.Queries
+	Queries  *db.Queries
+	EventBus *events.EventBus
 }
 
-func NewHandler(queries *db.Queries) *Handler {
+func NewHandler(queries *db.Queries, eventBus *events.EventBus) *Handler {
 	return &Handler{
-		Queries: queries,
+		Queries:  queries,
+		EventBus: eventBus,
 	}
 }
 
@@ -62,7 +66,7 @@ func (h *Handler) HandleMinioWebhook(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Received upload event for key: %s (decoded: %s)", key, decodedKey)
 
 		// Update DB status to 'uploaded'
-		_, err = h.Queries.UpdateUploadStatusByKey(r.Context(), db.UpdateUploadStatusByKeyParams{
+		upload, err := h.Queries.UpdateUploadStatusByKey(r.Context(), db.UpdateUploadStatusByKeyParams{
 			S3Key:  decodedKey,
 			Status: db.UploadStatusUploaded,
 		})
@@ -72,6 +76,23 @@ func (h *Handler) HandleMinioWebhook(w http.ResponseWriter, r *http.Request) {
 		}
 		
 		log.Printf("Successfully marked upload as uploaded: %s", decodedKey)
+
+		// Publish event to NATS
+		eventPayload := map[string]string{
+			"upload_id": fmt.Sprintf("%x", upload.ID.Bytes), // pgtype.UUID is [16]byte
+			"s3_key":    upload.S3Key,
+		}
+		eventBytes, err := json.Marshal(eventPayload)
+		if err != nil {
+			log.Printf("Failed to marshal event payload: %v", err)
+			continue
+		}
+
+		if err := h.EventBus.Publish("uploads.uploaded", eventBytes); err != nil {
+			log.Printf("Failed to publish event to NATS: %v", err)
+			continue
+		}
+		log.Printf("Published uploads.uploaded event for %s", upload.S3Key)
 	}
 
 	w.WriteHeader(http.StatusOK)

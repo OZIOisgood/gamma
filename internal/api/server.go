@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/OZIOisgood/gamma/internal/db"
+	"github.com/OZIOisgood/gamma/internal/events"
 	"github.com/OZIOisgood/gamma/internal/storage"
 	"github.com/OZIOisgood/gamma/internal/uploads"
 	"github.com/OZIOisgood/gamma/internal/webhooks"
@@ -15,14 +16,16 @@ import (
 )
 
 type Server struct {
-	Router *chi.Mux
-	Pool   *pgxpool.Pool
+	Router   *chi.Mux
+	Pool     *pgxpool.Pool
+	EventBus *events.EventBus
 }
 
-func NewServer(pool *pgxpool.Pool) *Server {
+func NewServer(pool *pgxpool.Pool, eventBus *events.EventBus) *Server {
 	s := &Server{
-		Router: chi.NewRouter(),
-		Pool:   pool,
+		Router:   chi.NewRouter(),
+		Pool:     pool,
+		EventBus: eventBus,
 	}
 	s.routes()
 	return s
@@ -39,7 +42,7 @@ func (s *Server) routes() {
 	uploadsHandler := uploads.NewHandler(storageService, queries)
 	uploadsHandler.RegisterRoutes(s.Router)
 
-	webhooksHandler := webhooks.NewHandler(queries)
+	webhooksHandler := webhooks.NewHandler(queries, s.EventBus)
 	webhooksHandler.RegisterRoutes(s.Router)
 }
 
