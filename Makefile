@@ -1,6 +1,9 @@
 include .env
 export
 
+fmt:
+	go fmt ./...
+
 build:
 	@mkdir -p bin
 	go build -o bin/api ./cmd/api

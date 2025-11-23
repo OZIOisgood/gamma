@@ -74,7 +74,7 @@ func (h *Handler) HandleMinioWebhook(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Failed to update upload status for key %s: %v", decodedKey, err)
 			continue
 		}
-		
+
 		log.Printf("Successfully marked upload as uploaded: %s", decodedKey)
 
 		// Publish event to NATS
