@@ -29,7 +29,19 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Post("/uploads", h.CreateUpload)
 	r.Get("/uploads", h.List)
 	r.Get("/uploads/{id}", h.Get)
+	r.Get("/assets", h.ListAssets)
 	r.Get("/assets/{id}", h.GetAsset)
+}
+
+func (h *Handler) ListAssets(w http.ResponseWriter, r *http.Request) {
+	assets, err := h.Queries.ListAssets(r.Context())
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to list assets: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(assets)
 }
 
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {

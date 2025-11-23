@@ -81,6 +81,38 @@ func (q *Queries) GetAssetByUploadID(ctx context.Context, uploadID pgtype.UUID) 
 	return i, err
 }
 
+const listAssets = `-- name: ListAssets :many
+SELECT id, upload_id, hls_root, status, created_at, updated_at FROM assets
+ORDER BY created_at DESC
+`
+
+func (q *Queries) ListAssets(ctx context.Context) ([]Asset, error) {
+	rows, err := q.db.Query(ctx, listAssets)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Asset
+	for rows.Next() {
+		var i Asset
+		if err := rows.Scan(
+			&i.ID,
+			&i.UploadID,
+			&i.HlsRoot,
+			&i.Status,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateAssetStatus = `-- name: UpdateAssetStatus :one
 UPDATE assets
 SET status = $2, updated_at = NOW()

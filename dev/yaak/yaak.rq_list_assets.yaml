@@ -1,8 +1,8 @@
 type: http_request
 model: http_request
-id: rq_get_asset
+id: rq_list_assets
 createdAt: 2025-11-23T12:00:00
-updatedAt: 2025-11-23T18:59:20.111612
+updatedAt: 2025-11-23T18:58:53.334187
 workspaceId: wk_gamma
 folderId: fl_videos
 authentication: {}
@@ -12,7 +12,7 @@ bodyType: null
 description: ''
 headers: []
 method: GET
-name: Get Asset
-sortPriority: 30.0
-url: ${[BASE_URL]}/assets/fc544ed5-f944-444d-9128-4cd0c17955b1
+name: List Assets
+sortPriority: 23.333333333333332
+url: ${[BASE_URL]}/assets
 urlParameters: []
