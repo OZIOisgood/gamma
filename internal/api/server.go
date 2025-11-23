@@ -45,6 +45,10 @@ func (s *Server) initStorage() *storage.Storage {
 		log.Printf("Failed to ensure bucket exists: %v", err)
 	}
 
+	if err := storageService.EnsureHLSPublicPolicy(context.Background()); err != nil {
+		log.Printf("Failed to ensure HLS public policy: %v", err)
+	}
+
 	// Run notification setup in background
 	go func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)

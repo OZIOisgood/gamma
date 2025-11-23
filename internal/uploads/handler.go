@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"path/filepath"
 
 	"github.com/OZIOisgood/gamma/internal/db"
@@ -31,6 +32,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Get("/uploads/{id}", h.Get)
 	r.Get("/assets", h.ListAssets)
 	r.Get("/assets/{id}", h.GetAsset)
+	r.Get("/assets/{id}/playlist", h.GetAssetPlaylist)
 }
 
 func (h *Handler) ListAssets(w http.ResponseWriter, r *http.Request) {
@@ -159,4 +161,57 @@ func (h *Handler) GetAsset(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(asset)
+}
+
+type GetAssetPlaylistResponse struct {
+	URL string `json:"url"`
+}
+
+func (h *Handler) GetAssetPlaylist(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	var pgUUID pgtype.UUID
+	err := pgUUID.Scan(idStr)
+	if err != nil {
+		http.Error(w, "Invalid UUID", http.StatusBadRequest)
+		return
+	}
+
+	asset, err := h.Queries.GetAsset(r.Context(), pgUUID)
+	if err != nil {
+		// Try to find by upload ID as well, just in case user passed upload ID
+		asset, err = h.Queries.GetAssetByUploadID(r.Context(), pgUUID)
+		if err != nil {
+			http.Error(w, "Asset not found", http.StatusNotFound)
+			return
+		}
+	}
+
+	if asset.Status != db.AssetStatusReady {
+		http.Error(w, "Asset is not ready", http.StatusBadRequest)
+		return
+	}
+
+	key := asset.HlsRoot
+	presignedURL, err := h.Storage.GeneratePresignedGetURL(r.Context(), key)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to generate playlist URL: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// Since the bucket is public for HLS, we can strip the query parameters
+	// to provide a cleaner URL and avoid expiration issues.
+	u, err := url.Parse(presignedURL)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to parse URL: %v", err), http.StatusInternalServerError)
+		return
+	}
+	u.RawQuery = ""
+	finalURL := u.String()
+
+	resp := GetAssetPlaylistResponse{
+		URL: finalURL,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
 }

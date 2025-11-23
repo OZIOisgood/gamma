@@ -107,8 +107,44 @@ func (s *Storage) EnsureBucketNotification(ctx context.Context) error {
 	return nil
 }
 
+func (s *Storage) EnsureHLSPublicPolicy(ctx context.Context) error {
+	policy := fmt.Sprintf(`{
+		"Version": "2012-10-17",
+		"Statement": [
+			{
+				"Effect": "Allow",
+				"Principal": {
+					"AWS": ["*"]
+				},
+				"Action": ["s3:GetObject"],
+				"Resource": ["arn:aws:s3:::%s/hls/*"]
+			}
+		]
+	}`, s.Bucket)
+
+	_, err := s.Client.PutBucketPolicy(ctx, &s3.PutBucketPolicyInput{
+		Bucket: aws.String(s.Bucket),
+		Policy: aws.String(policy),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to set bucket policy: %w", err)
+	}
+	return nil
+}
+
 func (s *Storage) GeneratePresignedPutURL(ctx context.Context, key string) (string, error) {
 	req, err := s.PresignClient.PresignPutObject(ctx, &s3.PutObjectInput{
+		Bucket: aws.String(s.Bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to generate presigned URL: %w", err)
+	}
+	return req.URL, nil
+}
+
+func (s *Storage) GeneratePresignedGetURL(ctx context.Context, key string) (string, error) {
+	req, err := s.PresignClient.PresignGetObject(ctx, &s3.GetObjectInput{
 		Bucket: aws.String(s.Bucket),
 		Key:    aws.String(key),
 	})
