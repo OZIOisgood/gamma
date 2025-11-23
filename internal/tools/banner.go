@@ -7,11 +7,11 @@ import (
 	"github.com/fatih/color"
 )
 
-func PrintBanner() {
-	data, err := os.ReadFile("assets/banner.txt")
+func PrintBanner(path string, attr color.Attribute) {
+	data, err := os.ReadFile(path)
 	if err != nil {
 		log.Printf("Failed to load banner: %v", err)
 		return
 	}
-	color.Cyan(string(data))
+	color.New(attr).Println(string(data))
 }

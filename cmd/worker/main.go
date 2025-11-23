@@ -11,10 +11,12 @@ import (
 	"github.com/OZIOisgood/gamma/internal/events"
 	"github.com/OZIOisgood/gamma/internal/tools"
 	"github.com/OZIOisgood/gamma/internal/worker"
+	"github.com/fatih/color"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func main() {
+	tools.PrintBanner("assets/worker-banner.txt", color.FgHiMagenta)
 	tools.LoadEnv()
 
 	natsURL := os.Getenv("NATS_URL")

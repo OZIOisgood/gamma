@@ -7,11 +7,12 @@ import (
 
 	"github.com/OZIOisgood/gamma/internal/api"
 	"github.com/OZIOisgood/gamma/internal/tools"
+	"github.com/fatih/color"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func main() {
-	tools.PrintBanner()
+	tools.PrintBanner("assets/api-banner.txt", color.FgCyan)
 	tools.LoadEnv()
 
 	dbURL := tools.GetEnv("DB_URL")
