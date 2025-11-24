@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { BehaviorSubject, Observable, switchMap } from 'rxjs';
 
 export interface Upload {
   ID: string;
@@ -16,12 +16,19 @@ export interface Upload {
 })
 export class AssetsService {
   private readonly apiUrl = 'http://localhost:8080/uploads';
+  private refreshSubject = new BehaviorSubject<void>(undefined);
 
   constructor(private http: HttpClient) {}
 
   getUploads(): Observable<Upload[]> {
-    return this.http.get<Upload[]>(this.apiUrl, {
-      withCredentials: true,
-    });
+    return this.refreshSubject.pipe(
+      switchMap(() => this.http.get<Upload[]>(this.apiUrl, {
+        withCredentials: true,
+      }))
+    );
+  }
+
+  refresh() {
+    this.refreshSubject.next();
   }
 }

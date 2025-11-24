@@ -5,11 +5,23 @@ import { TuiLoader } from '@taiga-ui/core';
 import { TuiBadge, TuiStatus } from '@taiga-ui/kit';
 import { AssetsService } from '../../core/assets/assets.service';
 import { NavbarComponent } from '../../core/navbar/navbar.component';
+import { UploadDrawerComponent } from '../upload/upload-drawer/upload-drawer.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [NavbarComponent, TuiTable, NgForOf, AsyncPipe, DatePipe, TuiLoader, NgIf, TuiBadge, TuiStatus],
+  imports: [
+    NavbarComponent, 
+    TuiTable, 
+    NgForOf, 
+    AsyncPipe, 
+    DatePipe, 
+    TuiLoader, 
+    NgIf, 
+    TuiBadge, 
+    TuiStatus,
+    UploadDrawerComponent
+  ],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
 })

@@ -1,0 +1,48 @@
+<div class="backdrop" *ngIf="isOpen$ | async" (click)="onBackdropClick($event)">
+  <div class="drawer">
+    <div class="drawer-header">
+      <div class="header-title">UPLOAD VIDEO</div>
+      <button 
+        tuiIconButton 
+        appearance="flat" 
+        iconStart="@tui.material.sharp.close" 
+        size="s" 
+        (click)="close()"
+        class="close-btn"
+      ></button>
+    </div>
+    
+    <div class="drawer-content">
+      <div 
+        class="drop-zone" 
+        [class.dragging]="isDragging"
+        (click)="triggerFileInput()"
+      >
+        <input 
+          #fileInput 
+          type="file" 
+          accept="video/*" 
+          hidden 
+          (change)="onFileSelected($event)"
+        >
+        
+        <div *ngIf="!uploading; else progressTpl" class="upload-placeholder">
+          <tui-icon icon="@tui.upload-cloud" class="upload-icon"></tui-icon>
+          <div class="upload-text">
+            DRAG AND DROP VIDEO HERE<br>
+            OR CLICK TO BROWSE
+          </div>
+        </div>
+
+        <ng-template #progressTpl>
+          <div class="progress-container">
+            <div class="progress-text">UPLOADING... {{ progress }}%</div>
+            <div class="progress-bar">
+              <div class="progress-fill" [style.width.%]="progress"></div>
+            </div>
+          </div>
+        </ng-template>
+      </div>
+    </div>
+  </div>
+</div>
