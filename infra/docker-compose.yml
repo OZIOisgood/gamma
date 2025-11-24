@@ -62,6 +62,7 @@ services:
       DASHBOARD_USER: admin
       DASHBOARD_PASSWORD: password
       SESSION_SECRET: supersecret
+      NATS_URL: nats://nats:4222
     ports:
       - "8080:8080"
     depends_on:

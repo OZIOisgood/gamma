@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/OZIOisgood/gamma/internal/db"
+	"github.com/OZIOisgood/gamma/internal/events"
 	"github.com/OZIOisgood/gamma/internal/storage"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -21,13 +22,15 @@ import (
 type Handler struct {
 	Queries    *db.Queries
 	Storage    *storage.Storage
+	EventBus   *events.EventBus
 	WorkerName string
 }
 
-func NewHandler(queries *db.Queries, storage *storage.Storage, workerName string) *Handler {
+func NewHandler(queries *db.Queries, storage *storage.Storage, eventBus *events.EventBus, workerName string) *Handler {
 	return &Handler{
 		Queries:    queries,
 		Storage:    storage,
+		EventBus:   eventBus,
 		WorkerName: workerName,
 	}
 }
@@ -134,10 +137,10 @@ func (h *Handler) processVideo(ctx context.Context, key string) error {
 		if err != nil {
 			return err
 		}
-		
+
 		// S3 Key: hls/<assetId>/...
 		s3Key := filepath.Join("hls", relPath)
-		
+
 		contentType := "application/octet-stream"
 		if strings.HasSuffix(path, ".m3u8") {
 			contentType = "application/vnd.apple.mpegurl"
@@ -179,6 +182,17 @@ func (h *Handler) processVideo(ctx context.Context, key string) error {
 	})
 	if err != nil {
 		return fmt.Errorf("failed to update upload status to ready: %w", err)
+	}
+
+	// Publish asset processed event
+	eventData := map[string]string{
+		"asset_id":  assetID.String(),
+		"upload_id": uploadIDStr,
+		"status":    string(db.AssetStatusReady),
+	}
+	eventBytes, _ := json.Marshal(eventData)
+	if err := h.EventBus.Publish("gamma.assets.processed", eventBytes); err != nil {
+		log.Printf("Failed to publish asset processed event: %v", err)
 	}
 
 	log.Printf("Successfully processed video %s -> asset %s", key, assetID.String())

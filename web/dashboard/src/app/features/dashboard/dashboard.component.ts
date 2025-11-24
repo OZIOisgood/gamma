@@ -1,10 +1,12 @@
 import { AsyncPipe, DatePipe, NgForOf, NgIf } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { TuiTable } from '@taiga-ui/addon-table';
 import { TuiLoader } from '@taiga-ui/core';
 import { TuiBadge, TuiStatus } from '@taiga-ui/kit';
+import { BehaviorSubject, Subscription, switchMap } from 'rxjs';
 import { AssetsService } from '../../core/assets/assets.service';
 import { NavbarComponent } from '../../core/navbar/navbar.component';
+import { WebsocketService } from '../../core/services/websocket.service';
 import { UploadDrawerComponent } from '../upload/upload-drawer/upload-drawer.component';
 
 @Component({
@@ -25,11 +27,29 @@ import { UploadDrawerComponent } from '../upload/upload-drawer/upload-drawer.com
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
 })
-export class DashboardComponent {
+export class DashboardComponent implements OnInit, OnDestroy {
   private readonly assetsService = inject(AssetsService);
+  private readonly websocketService = inject(WebsocketService);
   
+  private readonly refresh$ = new BehaviorSubject<void>(undefined);
+  private wsSubscription?: Subscription;
+
   readonly columns = ['ID', 'Title', 'Status', 'CreatedAt'];
-  readonly data$ = this.assetsService.getUploads();
+  readonly data$ = this.refresh$.pipe(
+    switchMap(() => this.assetsService.getUploads())
+  );
+
+  ngOnInit() {
+    this.wsSubscription = this.websocketService.messages$.subscribe(msg => {
+      if (msg.type === 'asset_processed') {
+        this.refresh$.next();
+      }
+    });
+  }
+
+  ngOnDestroy() {
+    this.wsSubscription?.unsubscribe();
+  }
 
   getShortId(id: string): string {
     return id.split('-')[0];

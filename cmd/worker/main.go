@@ -43,13 +43,14 @@ func main() {
 
 	queries := db.New(pool)
 	store := storage.New()
-	handler := worker.NewHandler(queries, store, workerName)
 
 	eventBus, err := events.NewEventBus(natsURL)
 	if err != nil {
 		log.Fatalf("Unable to connect to NATS: %v", err)
 	}
 	defer eventBus.Close()
+
+	handler := worker.NewHandler(queries, store, eventBus, workerName)
 
 	// Ensure stream exists for MinIO events
 	// MinIO publishes to subjects like "gamma.minio.uploaded"

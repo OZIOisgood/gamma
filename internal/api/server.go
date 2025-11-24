@@ -3,10 +3,12 @@ package api
 import (
 	"context"
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/OZIOisgood/gamma/internal/auth"
 	"github.com/OZIOisgood/gamma/internal/db"
+	"github.com/OZIOisgood/gamma/internal/events"
 	"github.com/OZIOisgood/gamma/internal/storage"
 	"github.com/OZIOisgood/gamma/internal/uploads"
 	"github.com/go-chi/chi/v5"
@@ -16,15 +18,21 @@ import (
 )
 
 type Server struct {
-	Router *chi.Mux
-	Pool   *pgxpool.Pool
+	Router   *chi.Mux
+	Pool     *pgxpool.Pool
+	EventBus *events.EventBus
+	Hub      *Hub
 }
 
-func NewServer(pool *pgxpool.Pool) *Server {
+func NewServer(pool *pgxpool.Pool, eventBus *events.EventBus) *Server {
 	s := &Server{
-		Router: chi.NewRouter(),
-		Pool:   pool,
+		Router:   chi.NewRouter(),
+		Pool:     pool,
+		EventBus: eventBus,
+		Hub:      NewHub(),
 	}
+	go s.Hub.Run()
+	s.subscribeToEvents()
 	s.routes()
 	return s
 }
@@ -45,6 +53,9 @@ func (s *Server) routes() {
 
 	s.Router.Post("/auth/login", auth.Login)
 	s.Router.Post("/auth/logout", auth.Logout)
+	s.Router.Get("/ws", func(w http.ResponseWriter, r *http.Request) {
+		ServeWs(s.Hub, w, r)
+	})
 
 	queries := db.New(s.Pool)
 	storageService := s.initStorage()

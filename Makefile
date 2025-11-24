@@ -28,7 +28,7 @@ docker-restart:
 	$(MAKE) docker-clean
 	$(MAKE) docker-up
 	@echo "Waiting for database to be ready..."
-	@sleep 2
+	@sleep 5
 	$(MAKE) migrate-up
 
 sqlc:
