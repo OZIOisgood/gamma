@@ -11,6 +11,7 @@ import (
 	"github.com/OZIOisgood/gamma/internal/uploads"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -32,6 +33,15 @@ func (s *Server) routes() {
 	s.Router.Use(middleware.Logger)
 	s.Router.Use(middleware.Recoverer)
 	s.Router.Use(middleware.StripSlashes)
+
+	s.Router.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:4200", "http://localhost:3000"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: true,
+		MaxAge:           300,
+	}))
 
 	s.Router.Post("/auth/login", auth.Login)
 	s.Router.Post("/auth/logout", auth.Logout)

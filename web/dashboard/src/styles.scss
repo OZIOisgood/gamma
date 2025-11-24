@@ -1,1 +1,115 @@
 /* You can add global styles to this file, and also import other style files */
+@use '@taiga-ui/core/styles/taiga-ui-local';
+
+/* Global Theme Styles */
+:root {
+  --app-font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --app-bg-color: #fff;
+  --app-text-color: #000;
+  
+  /* Taiga UI Theme Overrides - Balenciaga Style */
+  --tui-radius-xs: 0;
+  --tui-radius-s: 0;
+  --tui-radius-m: 0;
+  --tui-radius-l: 0;
+  --tui-radius-xl: 0;
+  --tui-background-accent-1: #000; /* Primary accent color */
+}
+
+body {
+  background-color: var(--app-bg-color);
+  color: var(--app-text-color);
+  font-family: var(--app-font-family);
+  margin: 0;
+}
+
+/* Tooltip/Hint Overrides */
+.tui-hint {
+  background: #000 !important;
+  color: #fff !important;
+  border-radius: 0 !important;
+  font-size: 0.75rem !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0.5rem 0.75rem !important;
+  box-shadow: none !important;
+}
+
+/* Typography */
+.text-uppercase {
+  text-transform: uppercase;
+}
+
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin: 0;
+  text-align: center;
+}
+
+.input-label {
+  font-size: 0.75rem;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+/* Components */
+.theme-input {
+  --tui-radius-l: 0;
+  --tui-background-base: transparent;
+  --tui-background-base-alt: transparent;
+  border: 1px solid #000;
+  border-radius: 0;
+  
+  &[data-focused] {
+     outline: 1px solid #000;
+  }
+}
+
+.btn-primary {
+  background-color: #000;
+  color: #fff;
+  border: none;
+  height: 48px;
+  width: 100%;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background-color: #333;
+  }
+
+  &:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+}
+
+.error-message {
+  color: #dc2626;
+  font-size: 0.875rem;
+  text-align: center;
+  margin-top: 1rem;
+  text-transform: uppercase;
+}
+
+

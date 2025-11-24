@@ -1,0 +1,37 @@
+<div class="login-container">
+  <div class="login-content">
+    <div class="header">
+      <h1 class="page-title">LOGIN</h1>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+      <div class="form-group">
+        <label class="input-label">USERNAME *</label>
+        <tui-textfield class="theme-input" [tuiTextfieldSize]="'l'">
+          <input tuiTextfield formControlName="username" placeholder="Username" />
+        </tui-textfield>
+      </div>
+
+      <div class="form-group">
+        <label class="input-label">PASSWORD *</label>
+        <tui-textfield class="theme-input" [tuiTextfieldSize]="'l'">
+          <input tuiTextfield type="password" formControlName="password" placeholder="Password" />
+          <tui-icon tuiPassword></tui-icon>
+        </tui-textfield>
+      </div>
+
+      <button 
+        type="submit" 
+        class="btn-primary"
+        [disabled]="loginForm.invalid || loading"
+      >
+        NEXT
+      </button>
+
+      <div *ngIf="error" class="error-message">
+        {{ error }}
+      </div>
+    </form>
+  </div>
+</div>
+

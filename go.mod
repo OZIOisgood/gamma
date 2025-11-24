@@ -11,6 +11,8 @@ require (
 
 require github.com/golang-jwt/jwt/v5 v5.3.0
 
+require github.com/go-chi/cors v1.2.2 // indirect
+
 require (
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/nats-io/nats.go v1.47.0
