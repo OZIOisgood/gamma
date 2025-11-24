@@ -1,10 +1,15 @@
-<div class="login-container">
-  <div class="login-content">
-    <div class="header">
-      <h1 class="page-title">LOGIN</h1>
-    </div>
+<div class="login-wrapper">
+  <nav class="navbar">
+    <div class="brand">GAMMA</div>
+  </nav>
 
-    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+  <div class="login-container">
+    <div class="login-content">
+      <div class="header">
+        <h1 class="page-title">LOGIN</h1>
+      </div>
+
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
       <div class="form-group">
         <label class="input-label">USERNAME *</label>
         <tui-textfield class="theme-input" [tuiTextfieldSize]="'l'">
@@ -32,6 +37,7 @@
         {{ error }}
       </div>
     </form>
+  </div>
   </div>
 </div>
 

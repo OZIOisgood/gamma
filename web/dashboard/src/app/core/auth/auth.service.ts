@@ -12,17 +12,46 @@ export class AuthService {
 
   constructor(private http: HttpClient) {}
 
+  get isAuthenticated(): boolean {
+    return !!localStorage.getItem('isLoggedIn');
+  }
+
   login(credentials: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/login`, credentials, {
-      withCredentials: true, // Important for HttpOnly cookies
-      responseType: 'text'   // The backend returns "Logged in" string, not JSON
+    return new Observable(observer => {
+      this.http.post(`${this.apiUrl}/login`, credentials, {
+        withCredentials: true,
+        responseType: 'text'
+      }).subscribe({
+        next: (res) => {
+          localStorage.setItem('isLoggedIn', 'true');
+          observer.next(res);
+          observer.complete();
+        },
+        error: (err) => {
+          observer.error(err);
+        }
+      });
     });
   }
 
   logout(): Observable<any> {
-    return this.http.post(`${this.apiUrl}/logout`, {}, {
-      withCredentials: true,
-      responseType: 'text'
+    return new Observable(observer => {
+      this.http.post(`${this.apiUrl}/logout`, {}, {
+        withCredentials: true,
+        responseType: 'text'
+      }).subscribe({
+        next: (res) => {
+          localStorage.removeItem('isLoggedIn');
+          observer.next(res);
+          observer.complete();
+        },
+        error: (err) => {
+          // Even if logout fails on server, we clear local state
+          localStorage.removeItem('isLoggedIn');
+          observer.next(err);
+          observer.complete();
+        }
+      });
     });
   }
 }

@@ -1,0 +1,38 @@
+<app-navbar></app-navbar>
+<main class="container">
+  <h1 class="title">Assets</h1>
+  
+  <ng-container *ngIf="data$ | async as data; else loading">
+    <table tuiTable [columns]="columns">
+      <thead>
+        <tr tuiThGroup>
+          <th *tuiHead="'ID'" tuiTh>ID</th>
+          <th *tuiHead="'Title'" tuiTh>Name</th>
+          <th *tuiHead="'Status'" tuiTh>Status</th>
+          <th *tuiHead="'CreatedAt'" tuiTh>Uploaded</th>
+        </tr>
+      </thead>
+      <tbody tuiTbody [data]="data">
+        <tr *ngFor="let item of data" tuiTr>
+          <td *tuiCell="'ID'" tuiTd>
+            <span class="id-cell">#{{ getShortId(item.ID) }}</span>
+          </td>
+          <td *tuiCell="'Title'" tuiTd>{{ item.Title }}</td>
+          <td *tuiCell="'Status'" tuiTd>
+            <tui-badge
+              [appearance]="getStatusAppearance(item.Status)"
+              tuiStatus
+            >
+              {{ item.Status }}
+            </tui-badge>
+          </td>
+          <td *tuiCell="'CreatedAt'" tuiTd>{{ item.CreatedAt | date:'medium' }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </ng-container>
+
+  <ng-template #loading>
+    <tui-loader size="xl" class="loader"></tui-loader>
+  </ng-template>
+</main>
