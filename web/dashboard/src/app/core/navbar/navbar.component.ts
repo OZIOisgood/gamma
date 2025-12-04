@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { TuiButton } from '@taiga-ui/core';
 import { AuthService } from '../auth/auth.service';
 import { UploadUiService } from '../services/upload-ui.service';
@@ -7,7 +7,7 @@ import { UploadUiService } from '../services/upload-ui.service';
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [TuiButton],
+  imports: [TuiButton, RouterLink],
   templateUrl: './navbar.component.html',
   styleUrls: ['./navbar.component.scss'],
 })

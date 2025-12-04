@@ -1,10 +1,11 @@
 import { AsyncPipe, DatePipe, NgForOf, NgIf } from '@angular/common';
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { TuiTable } from '@taiga-ui/addon-table';
 import { TuiLoader } from '@taiga-ui/core';
 import { TuiBadge, TuiStatus } from '@taiga-ui/kit';
 import { BehaviorSubject, Subscription, switchMap } from 'rxjs';
-import { AssetsService } from '../../core/assets/assets.service';
+import { AssetsService, Upload } from '../../core/assets/assets.service';
 import { NavbarComponent } from '../../core/navbar/navbar.component';
 import { WebsocketService } from '../../core/services/websocket.service';
 import { UploadDrawerComponent } from '../upload/upload-drawer/upload-drawer.component';
@@ -30,6 +31,7 @@ import { UploadDrawerComponent } from '../upload/upload-drawer/upload-drawer.com
 export class DashboardComponent implements OnInit, OnDestroy {
   private readonly assetsService = inject(AssetsService);
   private readonly websocketService = inject(WebsocketService);
+  private readonly router = inject(Router);
   
   private readonly refresh$ = new BehaviorSubject<void>(undefined);
   private wsSubscription?: Subscription;
@@ -49,6 +51,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.wsSubscription?.unsubscribe();
+  }
+
+  onRowClick(item: Upload) {
+    this.router.navigate(['/assets', item.ID]);
   }
 
   getShortId(id: string): string {

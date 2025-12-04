@@ -15,6 +15,12 @@ run-api:
 run-worker:
 	go run ./cmd/worker
 
+dashboard-build:
+	cd web/dashboard && pnpm install && pnpm run build
+
+dashboard-start:
+	cd web/dashboard && pnpm install && pnpm run start
+
 docker-up:
 	docker-compose -f ./infra/docker-compose.yml up -d --build
 
