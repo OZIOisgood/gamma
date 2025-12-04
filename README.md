@@ -1,6 +1,8 @@
+<img src="assets/poster.png" width="100%" alt="Gamma Poster" />
+
 # Gamma
 
-Gamma is a distributed video processing platform (a Mux-like pet project) designed to handle video ingestion, processing, and delivery.
+Gamma is a distributed video processing platform (a Mux-like) designed to handle video ingestion, processing, and delivery.
 
 ## How to start
 
