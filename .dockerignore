@@ -1,0 +1,13 @@
+.git
+.gitignore
+.env
+.env.example
+bin/
+web/
+infra/
+dev/
+test_video.mp4
+api
+worker
+README.md
+Makefile
