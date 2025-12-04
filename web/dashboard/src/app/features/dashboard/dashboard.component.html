@@ -4,33 +4,73 @@
   <h1 class="title">Assets</h1>
   
   <ng-container *ngIf="data$ | async as data; else loading">
-    <table tuiTable [columns]="columns">
-      <thead>
-        <tr tuiThGroup>
-          <th *tuiHead="'ID'" tuiTh>ID</th>
-          <th *tuiHead="'Title'" tuiTh>Name</th>
-          <th *tuiHead="'Status'" tuiTh>Status</th>
-          <th *tuiHead="'CreatedAt'" tuiTh>Uploaded</th>
-        </tr>
-      </thead>
-      <tbody tuiTbody [data]="data">
-        <tr *ngFor="let item of data" tuiTr (click)="onRowClick(item)" style="cursor: pointer">
-          <td *tuiCell="'ID'" tuiTd>
-            <span class="id-cell">#{{ getShortId(item.ID) }}</span>
-          </td>
-          <td *tuiCell="'Title'" tuiTd>{{ item.Title }}</td>
-          <td *tuiCell="'Status'" tuiTd>
-            <tui-badge
-              [appearance]="getStatusAppearance(item.Status)"
-              tuiStatus
-            >
-              {{ item.Status }}
-            </tui-badge>
-          </td>
-          <td *tuiCell="'CreatedAt'" tuiTd>{{ item.CreatedAt | date:'medium' }}</td>
-        </tr>
-      </tbody>
-    </table>
+    <ng-container *ngIf="data.length > 0; else emptyState">
+      <table tuiTable [columns]="columns">
+        <thead>
+          <tr tuiThGroup>
+            <th *tuiHead="'ID'" tuiTh>ID</th>
+            <th *tuiHead="'Title'" tuiTh>Name</th>
+            <th *tuiHead="'Status'" tuiTh>Status</th>
+            <th *tuiHead="'CreatedAt'" tuiTh>Uploaded</th>
+          </tr>
+        </thead>
+        <tbody tuiTbody [data]="data">
+          <tr *ngFor="let item of data" tuiTr (click)="onRowClick(item)" style="cursor: pointer">
+            <td *tuiCell="'ID'" tuiTd>
+              <span class="id-cell">#{{ getShortId(item.ID) }}</span>
+            </td>
+            <td *tuiCell="'Title'" tuiTd>{{ item.Title }}</td>
+            <td *tuiCell="'Status'" tuiTd>
+              <tui-badge
+                [appearance]="getStatusAppearance(item.Status)"
+                tuiStatus
+              >
+                {{ item.Status }}
+              </tui-badge>
+            </td>
+            <td *tuiCell="'CreatedAt'" tuiTd>{{ item.CreatedAt | date:'medium' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </ng-container>
+
+    <ng-template #emptyState>
+      <div 
+        class="empty-state"
+        [class.dragging]="isDragging"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave($event)"
+        (drop)="onDrop($event)"
+        (click)="triggerFileInput()"
+      >
+        <input 
+          #fileInput 
+          type="file" 
+          accept="video/*" 
+          hidden 
+          (change)="onFileSelected($event)"
+        >
+        
+        <div *ngIf="!uploading; else progressTpl" class="empty-content">
+          <div class="empty-icon-wrapper">
+            <tui-icon icon="@tui.upload-cloud" class="empty-icon"></tui-icon>
+          </div>
+          <h2 class="empty-title">No assets yet</h2>
+          <p class="empty-subtitle">Upload your first video to get started</p>
+          <button tuiButton appearance="primary" size="m" class="upload-btn">
+            Upload Video
+          </button>
+          <p class="drag-hint">or drag and drop here</p>
+        </div>
+  
+        <ng-template #progressTpl>
+          <div class="progress-container">
+            <tui-loader size="xl" [overlay]="true"></tui-loader>
+            <div class="progress-text">Uploading... {{ progress }}%</div>
+          </div>
+        </ng-template>
+      </div>
+    </ng-template>
   </ng-container>
 
   <ng-template #loading>
