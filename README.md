@@ -4,6 +4,8 @@
 
 Gamma is a distributed video processing platform (a Mux-like) designed to handle video ingestion, processing, and delivery.
 
+<img src="assets/screen-recording.gif" width="100%" alt="Gamma Demo" />
+
 ## How to start
 
 ### Prerequisites
