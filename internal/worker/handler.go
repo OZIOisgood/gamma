@@ -104,17 +104,35 @@ func (h *Handler) processVideo(ctx context.Context, key string) error {
 		return fmt.Errorf("failed to create hls dir: %w", err)
 	}
 
-	// Run ffmpeg
-	masterPlaylist := filepath.Join(hlsDir, "master.m3u8")
+	// Run ffmpeg with multi-quality support
+	// We will generate 3 variants: 1080p, 720p, 480p
+	masterPlaylist := "master.m3u8"
+	
+	// Ensure output directories exist for variants
 	cmd := exec.Command("ffmpeg",
 		"-i", localInput,
-		"-profile:v", "baseline",
-		"-level", "3.0",
-		"-start_number", "0",
-		"-hls_time", "10",
-		"-hls_list_size", "0",
+		"-filter_complex", "[0:v]split=3[v1][v2][v3];[v1]scale=w=1920:h=1080:force_original_aspect_ratio=decrease,pad=ceil(iw/2)*2:ceil(ih/2)*2[v1out];[v2]scale=w=1280:h=720:force_original_aspect_ratio=decrease,pad=ceil(iw/2)*2:ceil(ih/2)*2[v2out];[v3]scale=w=854:h=480:force_original_aspect_ratio=decrease,pad=ceil(iw/2)*2:ceil(ih/2)*2[v3out]",
+		
+		// 1080p
+		"-map", "[v1out]", "-c:v:0", "libx264", "-b:v:0", "5000k", "-maxrate:v:0", "5350k", "-bufsize:v:0", "7500k",
+		"-map", "a:0", "-c:a:0", "aac", "-b:a:0", "192k", "-ac", "2",
+		
+		// 720p
+		"-map", "[v2out]", "-c:v:1", "libx264", "-b:v:1", "2800k", "-maxrate:v:1", "2996k", "-bufsize:v:1", "4200k",
+		"-map", "a:0", "-c:a:1", "aac", "-b:a:1", "128k", "-ac", "2",
+		
+		// 480p
+		"-map", "[v3out]", "-c:v:2", "libx264", "-b:v:2", "1400k", "-maxrate:v:2", "1498k", "-bufsize:v:2", "2100k",
+		"-map", "a:0", "-c:a:2", "aac", "-b:a:2", "96k", "-ac", "2",
+
 		"-f", "hls",
-		masterPlaylist,
+		"-hls_time", "10",
+		"-hls_playlist_type", "vod",
+		"-hls_flags", "independent_segments",
+		"-master_pl_name", masterPlaylist,
+		"-hls_segment_filename", filepath.Join(hlsDir, "v%v_segment%03d.ts"),
+		"-var_stream_map", "v:0,a:0 v:1,a:1 v:2,a:2",
+		filepath.Join(hlsDir, "v%v.m3u8"),
 	)
 	// Capture output for debugging
 	cmd.Stdout = os.Stdout

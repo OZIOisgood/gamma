@@ -114,24 +114,7 @@ Gamma is built using a microservices architecture:
 - Basic video ingestion and upload flow
 - Asynchronous worker processing
 - Basic Dashboard UI
+- Multi-quality transcoding (ABR)
 
 ### To Do
-- [ ] Delete assets
-- [ ] Search (Elasticsearch)
-- [ ] i18n for dashboard
-- [ ] Security improvements
-- [ ] Quality selection
-- [ ] Subtitles selection
-- [ ] Documentation
-- [ ] CONTRIBUTING file
-- [ ] Client player
-- [ ] Preview GIFs
-- [ ] Thumbnails
-- [ ] Environment selection in dashboard (dev, qa, prod)
-- [ ] SDKs for popular languages
-- [ ] CORS configuration
-- [ ] Quality optimization on asset creation
-- [ ] Webhooks
-- [ ] DRM
-- [ ] Test flag on asset (watermark + 10s limit + auto-delete after 24h)
-- [ ] Metadata support: title, creator_id, external_id
+See [ISSUES.md](ISSUES.md) for the full roadmap and todo list.
