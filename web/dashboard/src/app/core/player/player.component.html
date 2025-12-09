@@ -1,0 +1,34 @@
+<div class="video-container">
+  <media-controller class="gamma-theme">
+    <hls-video
+      slot="media"
+      [src]="src()"
+      crossorigin
+      playsinline
+    ></hls-video>
+    
+    <media-settings-menu hidden anchor="auto">
+      <media-settings-menu-item>
+        Speed
+        <media-playback-rate-menu slot="submenu" hidden>
+          <div slot="title">Speed</div>
+        </media-playback-rate-menu>
+      </media-settings-menu-item>
+      <media-settings-menu-item>
+        Quality
+        <media-rendition-menu slot="submenu" hidden>
+          <div slot="title">Quality</div>
+        </media-rendition-menu>
+      </media-settings-menu-item>
+    </media-settings-menu>
+
+    <media-control-bar>
+      <media-play-button></media-play-button>
+      <media-time-display show-duration></media-time-display>
+      <media-time-range></media-time-range>
+      <media-settings-menu-button></media-settings-menu-button>
+      <media-pip-button></media-pip-button>
+      <media-fullscreen-button></media-fullscreen-button>
+    </media-control-bar>
+  </media-controller>
+</div>

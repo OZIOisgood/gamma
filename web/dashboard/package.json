@@ -38,7 +38,8 @@
     "@taiga-ui/icons-material": "^4.61.0",
     "@taiga-ui/kit": "^4.61.0",
     "@taiga-ui/layout": "^4.61.0",
-    "hls.js": "^1.6.15",
+    "hls-video-element": "^1.5.10",
+    "media-chrome": "^4.16.1",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },

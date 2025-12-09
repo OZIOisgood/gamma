@@ -1,0 +1,25 @@
+.video-container {
+  width: 100%;
+  aspect-ratio: 16/9;
+  background: black;
+}
+
+hls-video {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.gamma-theme {
+  --media-primary-color: #ffffff;
+  --media-secondary-color: #000000;
+  --media-control-background: rgba(0, 0, 0, 0.7);
+  --media-control-hover-background: rgba(0, 0, 0, 0.6);
+  --media-font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --media-range-track-border-radius: 0;
+  --media-range-thumb-border-radius: 0;
+  --media-button-icon-width: 24px;
+  width: 100%;
+  height: 100%;
+  display: block;
+}

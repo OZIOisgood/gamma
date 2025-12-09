@@ -1,0 +1,43 @@
+<app-navbar></app-navbar>
+<div class="container">
+  <tui-loader [overlay]="true" [showLoader]="loading()">
+    <div *ngIf="asset() as asset" class="content">
+      <header>
+        <h1>Asset #{{ getShortId(asset.ID) }}</h1>
+      </header>
+
+      <div class="details-grid">
+        <div class="player-card" *ngIf="isReady(asset)">
+          <app-player [src]="playlistUrl()"></app-player>
+        </div>
+        
+        <div class="player-card" *ngIf="!isReady(asset)">
+           <p>Video is processing or failed. Player unavailable.</p>
+        </div>
+
+        <div class="info-card">
+          <table tuiTable [columns]="columns" class="info-table">
+            <tbody tuiTbody [data]="infoData()">
+              <tr *ngFor="let item of infoData()" tuiTr>
+                <td *tuiCell="'label'" tuiTd class="label-cell">{{ item.label }}</td>
+                <td *tuiCell="'value'" tuiTd>
+                  <ng-container [ngSwitch]="item.type">
+                    <tui-badge *ngSwitchCase="'status'" [appearance]="getStatusAppearance(asset.Status)" tuiStatus>
+                      {{ asset.Status }}
+                    </tui-badge>
+                    <span *ngSwitchCase="'date'">{{ item.value | date:'medium' }}</span>
+                    <span *ngSwitchDefault class="break-all">{{ item.value }}</span>
+                  </ng-container>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    
+    <div *ngIf="error()" class="error-message">
+      {{ error() }}
+    </div>
+  </tui-loader>
+</div>
