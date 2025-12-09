@@ -228,3 +228,41 @@ func (h *Handler) processVideo(ctx context.Context, key string) error {
 	log.Printf("Successfully processed video %s -> asset %s", key, assetID.String())
 	return nil
 }
+
+func (h *Handler) HandleDeleteAssetEvent(msg *nats.Msg) {
+	log.Printf("[%s] Received delete asset message", h.WorkerName)
+
+	var event map[string]string
+	if err := json.Unmarshal(msg.Data, &event); err != nil {
+		log.Printf("Failed to unmarshal delete event: %v", err)
+		msg.Ack()
+		return
+	}
+
+	assetID := event["asset_id"]
+	uploadID := event["upload_id"]
+
+	ctx := context.Background()
+
+	if uploadID != "" {
+		var pgUUID pgtype.UUID
+		pgUUID.Scan(uploadID)
+		upload, err := h.Queries.GetUpload(ctx, pgUUID)
+		if err == nil {
+			if err := h.Storage.DeleteFile(ctx, upload.S3Key); err != nil {
+				log.Printf("Failed to delete original file %s: %v", upload.S3Key, err)
+			}
+		} else {
+			log.Printf("Failed to get upload %s: %v", uploadID, err)
+		}
+	}
+
+	if assetID != "" {
+		prefix := fmt.Sprintf("hls/%s/", assetID)
+		if err := h.Storage.DeleteFolder(ctx, prefix); err != nil {
+			log.Printf("Failed to delete HLS folder %s: %v", prefix, err)
+		}
+	}
+
+	msg.Ack()
+}

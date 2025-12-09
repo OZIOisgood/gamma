@@ -1,6 +1,6 @@
 # Issues / Roadmap
 
-- [ ] Delete assets
+- [x] Delete assets
 - [ ] Search (Elasticsearch)
 - [ ] i18n for dashboard
 - [ ] Security improvements

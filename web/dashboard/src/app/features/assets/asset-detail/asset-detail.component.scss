@@ -4,10 +4,20 @@
   margin: 0 auto;
 }
 
-header {
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 1rem;
   border-bottom: 1px solid var(--tui-base-03);
   padding-bottom: 0.5rem;
+}
+
+.delete-btn {
+  --tui-background-accent-1: #ff0000;
+  --tui-background-accent-2: #ff0000;
+  --tui-background-accent-2-hover: #cc0000;
+  --tui-text-01: white;
 }
 
 .details-grid {

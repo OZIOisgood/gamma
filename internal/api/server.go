@@ -60,7 +60,7 @@ func (s *Server) routes() {
 	queries := db.New(s.Pool)
 	storageService := s.initStorage()
 
-	uploadsHandler := uploads.NewHandler(storageService, queries)
+	uploadsHandler := uploads.NewHandler(storageService, queries, s.EventBus)
 
 	s.Router.Group(func(r chi.Router) {
 		r.Use(auth.Middleware)

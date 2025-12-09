@@ -5,11 +5,11 @@ RETURNING *;
 
 -- name: GetAsset :one
 SELECT * FROM assets
-WHERE id = $1 LIMIT 1;
+WHERE id = $1 AND deleted_at IS NULL LIMIT 1;
 
 -- name: GetAssetByUploadID :one
 SELECT * FROM assets
-WHERE upload_id = $1 LIMIT 1;
+WHERE upload_id = $1 AND deleted_at IS NULL LIMIT 1;
 
 -- name: UpdateAssetStatus :one
 UPDATE assets
@@ -19,4 +19,11 @@ RETURNING *;
 
 -- name: ListAssets :many
 SELECT * FROM assets
+WHERE deleted_at IS NULL
 ORDER BY created_at DESC;
+
+-- name: SoftDeleteAsset :one
+UPDATE assets
+SET status = 'deleted', deleted_at = NOW(), updated_at = NOW()
+WHERE id = $1
+RETURNING *;

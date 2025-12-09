@@ -17,6 +17,7 @@ const (
 	AssetStatusProcessing AssetStatus = "processing"
 	AssetStatusReady      AssetStatus = "ready"
 	AssetStatusFailed     AssetStatus = "failed"
+	AssetStatusDeleted    AssetStatus = "deleted"
 )
 
 func (e *AssetStatus) Scan(src interface{}) error {
@@ -62,6 +63,7 @@ const (
 	UploadStatusProcessing UploadStatus = "processing"
 	UploadStatusReady      UploadStatus = "ready"
 	UploadStatusFailed     UploadStatus = "failed"
+	UploadStatusDeleted    UploadStatus = "deleted"
 )
 
 func (e *UploadStatus) Scan(src interface{}) error {
@@ -106,6 +108,7 @@ type Asset struct {
 	Status    AssetStatus
 	CreatedAt pgtype.Timestamptz
 	UpdatedAt pgtype.Timestamptz
+	DeletedAt pgtype.Timestamptz
 }
 
 type Upload struct {
@@ -115,4 +118,5 @@ type Upload struct {
 	Status    UploadStatus
 	CreatedAt pgtype.Timestamptz
 	UpdatedAt pgtype.Timestamptz
+	DeletedAt pgtype.Timestamptz
 }

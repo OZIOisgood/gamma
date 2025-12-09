@@ -14,7 +14,7 @@ import (
 const createAsset = `-- name: CreateAsset :one
 INSERT INTO assets (id, upload_id, hls_root, status)
 VALUES ($1, $2, $3, $4)
-RETURNING id, upload_id, hls_root, status, created_at, updated_at
+RETURNING id, upload_id, hls_root, status, created_at, updated_at, deleted_at
 `
 
 type CreateAssetParams struct {
@@ -39,13 +39,14 @@ func (q *Queries) CreateAsset(ctx context.Context, arg CreateAssetParams) (Asset
 		&i.Status,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DeletedAt,
 	)
 	return i, err
 }
 
 const getAsset = `-- name: GetAsset :one
-SELECT id, upload_id, hls_root, status, created_at, updated_at FROM assets
-WHERE id = $1 LIMIT 1
+SELECT id, upload_id, hls_root, status, created_at, updated_at, deleted_at FROM assets
+WHERE id = $1 AND deleted_at IS NULL LIMIT 1
 `
 
 func (q *Queries) GetAsset(ctx context.Context, id pgtype.UUID) (Asset, error) {
@@ -58,13 +59,14 @@ func (q *Queries) GetAsset(ctx context.Context, id pgtype.UUID) (Asset, error) {
 		&i.Status,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DeletedAt,
 	)
 	return i, err
 }
 
 const getAssetByUploadID = `-- name: GetAssetByUploadID :one
-SELECT id, upload_id, hls_root, status, created_at, updated_at FROM assets
-WHERE upload_id = $1 LIMIT 1
+SELECT id, upload_id, hls_root, status, created_at, updated_at, deleted_at FROM assets
+WHERE upload_id = $1 AND deleted_at IS NULL LIMIT 1
 `
 
 func (q *Queries) GetAssetByUploadID(ctx context.Context, uploadID pgtype.UUID) (Asset, error) {
@@ -77,12 +79,14 @@ func (q *Queries) GetAssetByUploadID(ctx context.Context, uploadID pgtype.UUID) 
 		&i.Status,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DeletedAt,
 	)
 	return i, err
 }
 
 const listAssets = `-- name: ListAssets :many
-SELECT id, upload_id, hls_root, status, created_at, updated_at FROM assets
+SELECT id, upload_id, hls_root, status, created_at, updated_at, deleted_at FROM assets
+WHERE deleted_at IS NULL
 ORDER BY created_at DESC
 `
 
@@ -102,6 +106,7 @@ func (q *Queries) ListAssets(ctx context.Context) ([]Asset, error) {
 			&i.Status,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.DeletedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -113,11 +118,33 @@ func (q *Queries) ListAssets(ctx context.Context) ([]Asset, error) {
 	return items, nil
 }
 
+const softDeleteAsset = `-- name: SoftDeleteAsset :one
+UPDATE assets
+SET status = 'deleted', deleted_at = NOW(), updated_at = NOW()
+WHERE id = $1
+RETURNING id, upload_id, hls_root, status, created_at, updated_at, deleted_at
+`
+
+func (q *Queries) SoftDeleteAsset(ctx context.Context, id pgtype.UUID) (Asset, error) {
+	row := q.db.QueryRow(ctx, softDeleteAsset, id)
+	var i Asset
+	err := row.Scan(
+		&i.ID,
+		&i.UploadID,
+		&i.HlsRoot,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
 const updateAssetStatus = `-- name: UpdateAssetStatus :one
 UPDATE assets
 SET status = $2, updated_at = NOW()
 WHERE id = $1
-RETURNING id, upload_id, hls_root, status, created_at, updated_at
+RETURNING id, upload_id, hls_root, status, created_at, updated_at, deleted_at
 `
 
 type UpdateAssetStatusParams struct {
@@ -135,6 +162,7 @@ func (q *Queries) UpdateAssetStatus(ctx context.Context, arg UpdateAssetStatusPa
 		&i.Status,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DeletedAt,
 	)
 	return i, err
 }

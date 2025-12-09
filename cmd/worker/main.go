@@ -64,6 +64,17 @@ func main() {
 		log.Fatalf("Failed to subscribe: %v", err)
 	}
 
+	// Ensure stream for delete events
+	if err := eventBus.EnsureStream("GAMMA_OPS", []string{"delete_asset"}); err != nil {
+		log.Fatalf("Failed to ensure NATS stream for ops: %v", err)
+	}
+
+	// Subscribe to delete events
+	_, err = eventBus.Subscribe("delete_asset", "cleanup-workers", handler.HandleDeleteAssetEvent)
+	if err != nil {
+		log.Fatalf("Failed to subscribe to delete events: %v", err)
+	}
+
 	log.Println("Worker listening for events...")
 
 	// Wait for interrupt signal

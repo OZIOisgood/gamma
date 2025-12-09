@@ -1,8 +1,8 @@
 import { CommonModule, NgForOf, NgSwitch, NgSwitchCase, NgSwitchDefault } from '@angular/common';
 import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TuiTable } from '@taiga-ui/addon-table';
-import { TuiLoader } from '@taiga-ui/core';
+import { TuiButton, TuiLoader } from '@taiga-ui/core';
 import { TuiBadge, TuiStatus } from '@taiga-ui/kit';
 import { of, Subscription } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
@@ -16,6 +16,7 @@ import { PlayerComponent } from '../../../core/player/player.component';
   imports: [
     CommonModule, 
     TuiLoader, 
+    TuiButton,
     TuiBadge, 
     TuiStatus, 
     NavbarComponent, 
@@ -32,6 +33,7 @@ import { PlayerComponent } from '../../../core/player/player.component';
 export class AssetDetailComponent implements OnInit, OnDestroy {
   
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private assetsService = inject(AssetsService);
   
   asset = signal<Asset | null>(null);
@@ -113,5 +115,21 @@ export class AssetDetailComponent implements OnInit, OnDestroy {
         this.loading.set(false);
       }
     });
+  }
+
+  deleteAsset() {
+    const asset = this.asset();
+    if (!asset) return;
+
+    if (confirm('Are you sure you want to delete this asset?')) {
+      this.assetsService.deleteAsset(asset.ID).subscribe({
+        next: () => {
+          this.router.navigate(['/']);
+        },
+        error: (err) => {
+          console.error('Failed to delete asset', err);
+        }
+      });
+    }
   }
 }

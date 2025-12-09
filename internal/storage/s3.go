@@ -223,3 +223,51 @@ func (s *Storage) UploadFile(ctx context.Context, key string, srcPath string, co
 
 	return nil
 }
+
+func (s *Storage) DeleteFile(ctx context.Context, key string) error {
+	_, err := s.Client.DeleteObject(ctx, &s3.DeleteObjectInput{
+		Bucket: aws.String(s.Bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to delete file: %w", err)
+	}
+	return nil
+}
+
+func (s *Storage) DeleteFolder(ctx context.Context, prefix string) error {
+	// List objects with prefix
+	paginator := s3.NewListObjectsV2Paginator(s.Client, &s3.ListObjectsV2Input{
+		Bucket: aws.String(s.Bucket),
+		Prefix: aws.String(prefix),
+	})
+
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to list objects: %w", err)
+		}
+
+		if len(page.Contents) == 0 {
+			continue
+		}
+
+		var objects []types.ObjectIdentifier
+		for _, obj := range page.Contents {
+			objects = append(objects, types.ObjectIdentifier{
+				Key: obj.Key,
+			})
+		}
+
+		_, err = s.Client.DeleteObjects(ctx, &s3.DeleteObjectsInput{
+			Bucket: aws.String(s.Bucket),
+			Delete: &types.Delete{
+				Objects: objects,
+			},
+		})
+		if err != nil {
+			return fmt.Errorf("failed to delete objects: %w", err)
+		}
+	}
+	return nil
+}

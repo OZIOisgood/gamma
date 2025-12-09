@@ -3,11 +3,13 @@ package uploads
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"path/filepath"
 
 	"github.com/OZIOisgood/gamma/internal/db"
+	"github.com/OZIOisgood/gamma/internal/events"
 	"github.com/OZIOisgood/gamma/internal/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -15,14 +17,16 @@ import (
 )
 
 type Handler struct {
-	Storage *storage.Storage
-	Queries *db.Queries
+	Storage  *storage.Storage
+	Queries  *db.Queries
+	EventBus *events.EventBus
 }
 
-func NewHandler(storage *storage.Storage, queries *db.Queries) *Handler {
+func NewHandler(storage *storage.Storage, queries *db.Queries, eventBus *events.EventBus) *Handler {
 	return &Handler{
-		Storage: storage,
-		Queries: queries,
+		Storage:  storage,
+		Queries:  queries,
+		EventBus: eventBus,
 	}
 }
 
@@ -32,6 +36,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Get("/uploads/{id}", h.Get)
 	r.Get("/assets", h.ListAssets)
 	r.Get("/assets/{id}", h.GetAsset)
+	r.Delete("/assets/{id}", h.DeleteAsset)
 	r.Get("/assets/{id}/playlist", h.GetAssetPlaylist)
 }
 
@@ -214,4 +219,47 @@ func (h *Handler) GetAssetPlaylist(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
+}
+
+func (h *Handler) DeleteAsset(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	var pgUUID pgtype.UUID
+	err := pgUUID.Scan(idStr)
+	if err != nil {
+		http.Error(w, "Invalid UUID", http.StatusBadRequest)
+		return
+	}
+
+	asset, err := h.Queries.SoftDeleteAsset(r.Context(), pgUUID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to delete asset: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// Also soft delete the upload since the dashboard lists uploads
+	if _, err := h.Queries.SoftDeleteUpload(r.Context(), asset.UploadID); err != nil {
+		log.Printf("Failed to soft delete upload %v: %v", asset.UploadID, err)
+	}
+
+	uploadUUID, err := uuid.FromBytes(asset.UploadID.Bytes[:])
+	uploadIDStr := ""
+	if err == nil {
+		uploadIDStr = uploadUUID.String()
+	}
+
+	eventData := map[string]string{
+		"asset_id":  idStr,
+		"upload_id": uploadIDStr,
+	}
+
+	payload, err := json.Marshal(eventData)
+	if err != nil {
+		log.Printf("Failed to marshal delete event: %v", err)
+	} else {
+		if err := h.EventBus.Publish("delete_asset", payload); err != nil {
+			log.Printf("Failed to publish delete event: %v", err)
+		}
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }

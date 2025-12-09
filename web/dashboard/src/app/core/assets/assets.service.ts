@@ -48,6 +48,12 @@ export class AssetsService {
     });
   }
 
+  deleteAsset(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.assetsUrl}/${id}`, {
+      withCredentials: true,
+    });
+  }
+
   getAssetPlaylist(id: string): Observable<PlaylistResponse> {
     return this.http.get<PlaylistResponse>(`${this.assetsUrl}/${id}/playlist`, {
       withCredentials: true,

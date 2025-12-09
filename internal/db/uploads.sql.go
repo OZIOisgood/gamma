@@ -14,7 +14,7 @@ import (
 const createUpload = `-- name: CreateUpload :one
 INSERT INTO uploads (id, title, s3_key, status)
 VALUES ($1, $2, $3, $4)
-RETURNING id, title, s3_key, status, created_at, updated_at
+RETURNING id, title, s3_key, status, created_at, updated_at, deleted_at
 `
 
 type CreateUploadParams struct {
@@ -39,13 +39,14 @@ func (q *Queries) CreateUpload(ctx context.Context, arg CreateUploadParams) (Upl
 		&i.Status,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DeletedAt,
 	)
 	return i, err
 }
 
 const getUpload = `-- name: GetUpload :one
-SELECT id, title, s3_key, status, created_at, updated_at FROM uploads
-WHERE id = $1 LIMIT 1
+SELECT id, title, s3_key, status, created_at, updated_at, deleted_at FROM uploads
+WHERE id = $1 AND deleted_at IS NULL LIMIT 1
 `
 
 func (q *Queries) GetUpload(ctx context.Context, id pgtype.UUID) (Upload, error) {
@@ -58,12 +59,14 @@ func (q *Queries) GetUpload(ctx context.Context, id pgtype.UUID) (Upload, error)
 		&i.Status,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DeletedAt,
 	)
 	return i, err
 }
 
 const listUploads = `-- name: ListUploads :many
-SELECT id, title, s3_key, status, created_at, updated_at FROM uploads
+SELECT id, title, s3_key, status, created_at, updated_at, deleted_at FROM uploads
+WHERE deleted_at IS NULL
 ORDER BY created_at DESC
 `
 
@@ -83,6 +86,7 @@ func (q *Queries) ListUploads(ctx context.Context) ([]Upload, error) {
 			&i.Status,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.DeletedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -94,11 +98,33 @@ func (q *Queries) ListUploads(ctx context.Context) ([]Upload, error) {
 	return items, nil
 }
 
+const softDeleteUpload = `-- name: SoftDeleteUpload :one
+UPDATE uploads
+SET status = 'deleted', deleted_at = NOW(), updated_at = NOW()
+WHERE id = $1
+RETURNING id, title, s3_key, status, created_at, updated_at, deleted_at
+`
+
+func (q *Queries) SoftDeleteUpload(ctx context.Context, id pgtype.UUID) (Upload, error) {
+	row := q.db.QueryRow(ctx, softDeleteUpload, id)
+	var i Upload
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.S3Key,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
 const updateUploadStatusByKey = `-- name: UpdateUploadStatusByKey :one
 UPDATE uploads
 SET status = $2, updated_at = NOW()
 WHERE s3_key = $1
-RETURNING id, title, s3_key, status, created_at, updated_at
+RETURNING id, title, s3_key, status, created_at, updated_at, deleted_at
 `
 
 type UpdateUploadStatusByKeyParams struct {
@@ -116,6 +142,7 @@ func (q *Queries) UpdateUploadStatusByKey(ctx context.Context, arg UpdateUploadS
 		&i.Status,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DeletedAt,
 	)
 	return i, err
 }
