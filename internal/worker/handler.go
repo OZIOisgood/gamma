@@ -105,13 +105,13 @@ func (h *Handler) processVideo(ctx context.Context, key string) error {
 	}
 
 	// Run ffmpeg with multi-quality support
-	// We will generate 3 variants: 1080p, 720p, 480p
+	// We will generate 6 variants: 1080p, 720p, 480p, 360p, 240p, 144p
 	masterPlaylist := "master.m3u8"
 	
 	// Ensure output directories exist for variants
 	cmd := exec.Command("ffmpeg",
 		"-i", localInput,
-		"-filter_complex", "[0:v]split=3[v1][v2][v3];[v1]scale=w=1920:h=1080:force_original_aspect_ratio=decrease,pad=ceil(iw/2)*2:ceil(ih/2)*2[v1out];[v2]scale=w=1280:h=720:force_original_aspect_ratio=decrease,pad=ceil(iw/2)*2:ceil(ih/2)*2[v2out];[v3]scale=w=854:h=480:force_original_aspect_ratio=decrease,pad=ceil(iw/2)*2:ceil(ih/2)*2[v3out]",
+		"-filter_complex", "[0:v]split=6[v1][v2][v3][v4][v5][v6];[v1]scale=w=1920:h=1080:force_original_aspect_ratio=decrease,pad=ceil(iw/2)*2:ceil(ih/2)*2[v1out];[v2]scale=w=1280:h=720:force_original_aspect_ratio=decrease,pad=ceil(iw/2)*2:ceil(ih/2)*2[v2out];[v3]scale=w=854:h=480:force_original_aspect_ratio=decrease,pad=ceil(iw/2)*2:ceil(ih/2)*2[v3out];[v4]scale=w=640:h=360:force_original_aspect_ratio=decrease,pad=ceil(iw/2)*2:ceil(ih/2)*2[v4out];[v5]scale=w=426:h=240:force_original_aspect_ratio=decrease,pad=ceil(iw/2)*2:ceil(ih/2)*2[v5out];[v6]scale=w=256:h=144:force_original_aspect_ratio=decrease,pad=ceil(iw/2)*2:ceil(ih/2)*2[v6out]",
 		
 		// 1080p
 		"-map", "[v1out]", "-c:v:0", "libx264", "-b:v:0", "5000k", "-maxrate:v:0", "5350k", "-bufsize:v:0", "7500k",
@@ -125,13 +125,25 @@ func (h *Handler) processVideo(ctx context.Context, key string) error {
 		"-map", "[v3out]", "-c:v:2", "libx264", "-b:v:2", "1400k", "-maxrate:v:2", "1498k", "-bufsize:v:2", "2100k",
 		"-map", "a:0", "-c:a:2", "aac", "-b:a:2", "96k", "-ac", "2",
 
+		// 360p
+		"-map", "[v4out]", "-c:v:3", "libx264", "-b:v:3", "800k", "-maxrate:v:3", "856k", "-bufsize:v:3", "1200k",
+		"-map", "a:0", "-c:a:3", "aac", "-b:a:3", "96k", "-ac", "2",
+
+		// 240p
+		"-map", "[v5out]", "-c:v:4", "libx264", "-b:v:4", "400k", "-maxrate:v:4", "428k", "-bufsize:v:4", "600k",
+		"-map", "a:0", "-c:a:4", "aac", "-b:a:4", "64k", "-ac", "2",
+
+		// 144p
+		"-map", "[v6out]", "-c:v:5", "libx264", "-b:v:5", "200k", "-maxrate:v:5", "214k", "-bufsize:v:5", "300k",
+		"-map", "a:0", "-c:a:5", "aac", "-b:a:5", "64k", "-ac", "2",
+
 		"-f", "hls",
 		"-hls_time", "10",
 		"-hls_playlist_type", "vod",
 		"-hls_flags", "independent_segments",
 		"-master_pl_name", masterPlaylist,
 		"-hls_segment_filename", filepath.Join(hlsDir, "v%v_segment%03d.ts"),
-		"-var_stream_map", "v:0,a:0 v:1,a:1 v:2,a:2",
+		"-var_stream_map", "v:0,a:0 v:1,a:1 v:2,a:2 v:3,a:3 v:4,a:4 v:5,a:5",
 		filepath.Join(hlsDir, "v%v.m3u8"),
 	)
 	// Capture output for debugging
