@@ -8,7 +8,7 @@ folderId: fl_videos
 authentication: {}
 authenticationType: null
 body:
-  filePath: /Users/test/Documents/gamma/test_video.mp4
+  filePath: /Users/test/Documents/gamma/assets/videos/test_video_small_1080p_30sec.mp4
 bodyType: binary
 description: ''
 headers:
