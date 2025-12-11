@@ -55,6 +55,48 @@ func (ns NullAssetStatus) Value() (driver.Value, error) {
 	return string(ns.AssetStatus), nil
 }
 
+type RealmStatus string
+
+const (
+	RealmStatusActive  RealmStatus = "active"
+	RealmStatusDeleted RealmStatus = "deleted"
+)
+
+func (e *RealmStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = RealmStatus(s)
+	case string:
+		*e = RealmStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for RealmStatus: %T", src)
+	}
+	return nil
+}
+
+type NullRealmStatus struct {
+	RealmStatus RealmStatus
+	Valid       bool // Valid is true if RealmStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullRealmStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.RealmStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.RealmStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullRealmStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.RealmStatus), nil
+}
+
 type UploadStatus string
 
 const (
@@ -104,6 +146,7 @@ func (ns NullUploadStatus) Value() (driver.Value, error) {
 type Asset struct {
 	ID        pgtype.UUID
 	UploadID  pgtype.UUID
+	RealmID   pgtype.UUID
 	HlsRoot   string
 	Status    AssetStatus
 	CreatedAt pgtype.Timestamptz
@@ -111,8 +154,17 @@ type Asset struct {
 	DeletedAt pgtype.Timestamptz
 }
 
+type Realm struct {
+	ID        pgtype.UUID
+	Name      string
+	Status    RealmStatus
+	CreatedAt pgtype.Timestamptz
+	DeletedAt pgtype.Timestamptz
+}
+
 type Upload struct {
 	ID        pgtype.UUID
+	RealmID   pgtype.UUID
 	Title     string
 	S3Key     string
 	Status    UploadStatus

@@ -12,16 +12,17 @@ import (
 )
 
 const createUpload = `-- name: CreateUpload :one
-INSERT INTO uploads (id, title, s3_key, status)
-VALUES ($1, $2, $3, $4)
-RETURNING id, title, s3_key, status, created_at, updated_at, deleted_at
+INSERT INTO uploads (id, title, s3_key, status, realm_id)
+VALUES ($1, $2, $3, $4, $5)
+RETURNING id, realm_id, title, s3_key, status, created_at, updated_at, deleted_at
 `
 
 type CreateUploadParams struct {
-	ID     pgtype.UUID
-	Title  string
-	S3Key  string
-	Status UploadStatus
+	ID      pgtype.UUID
+	Title   string
+	S3Key   string
+	Status  UploadStatus
+	RealmID pgtype.UUID
 }
 
 func (q *Queries) CreateUpload(ctx context.Context, arg CreateUploadParams) (Upload, error) {
@@ -30,10 +31,12 @@ func (q *Queries) CreateUpload(ctx context.Context, arg CreateUploadParams) (Upl
 		arg.Title,
 		arg.S3Key,
 		arg.Status,
+		arg.RealmID,
 	)
 	var i Upload
 	err := row.Scan(
 		&i.ID,
+		&i.RealmID,
 		&i.Title,
 		&i.S3Key,
 		&i.Status,
@@ -45,7 +48,7 @@ func (q *Queries) CreateUpload(ctx context.Context, arg CreateUploadParams) (Upl
 }
 
 const getUpload = `-- name: GetUpload :one
-SELECT id, title, s3_key, status, created_at, updated_at, deleted_at FROM uploads
+SELECT id, realm_id, title, s3_key, status, created_at, updated_at, deleted_at FROM uploads
 WHERE id = $1 AND deleted_at IS NULL LIMIT 1
 `
 
@@ -54,6 +57,7 @@ func (q *Queries) GetUpload(ctx context.Context, id pgtype.UUID) (Upload, error)
 	var i Upload
 	err := row.Scan(
 		&i.ID,
+		&i.RealmID,
 		&i.Title,
 		&i.S3Key,
 		&i.Status,
@@ -65,13 +69,13 @@ func (q *Queries) GetUpload(ctx context.Context, id pgtype.UUID) (Upload, error)
 }
 
 const listUploads = `-- name: ListUploads :many
-SELECT id, title, s3_key, status, created_at, updated_at, deleted_at FROM uploads
-WHERE deleted_at IS NULL
+SELECT id, realm_id, title, s3_key, status, created_at, updated_at, deleted_at FROM uploads
+WHERE deleted_at IS NULL AND realm_id = $1
 ORDER BY created_at DESC
 `
 
-func (q *Queries) ListUploads(ctx context.Context) ([]Upload, error) {
-	rows, err := q.db.Query(ctx, listUploads)
+func (q *Queries) ListUploads(ctx context.Context, realmID pgtype.UUID) ([]Upload, error) {
+	rows, err := q.db.Query(ctx, listUploads, realmID)
 	if err != nil {
 		return nil, err
 	}
@@ -81,6 +85,7 @@ func (q *Queries) ListUploads(ctx context.Context) ([]Upload, error) {
 		var i Upload
 		if err := rows.Scan(
 			&i.ID,
+			&i.RealmID,
 			&i.Title,
 			&i.S3Key,
 			&i.Status,
@@ -102,7 +107,7 @@ const softDeleteUpload = `-- name: SoftDeleteUpload :one
 UPDATE uploads
 SET status = 'deleted', deleted_at = NOW(), updated_at = NOW()
 WHERE id = $1
-RETURNING id, title, s3_key, status, created_at, updated_at, deleted_at
+RETURNING id, realm_id, title, s3_key, status, created_at, updated_at, deleted_at
 `
 
 func (q *Queries) SoftDeleteUpload(ctx context.Context, id pgtype.UUID) (Upload, error) {
@@ -110,6 +115,7 @@ func (q *Queries) SoftDeleteUpload(ctx context.Context, id pgtype.UUID) (Upload,
 	var i Upload
 	err := row.Scan(
 		&i.ID,
+		&i.RealmID,
 		&i.Title,
 		&i.S3Key,
 		&i.Status,
@@ -120,11 +126,22 @@ func (q *Queries) SoftDeleteUpload(ctx context.Context, id pgtype.UUID) (Upload,
 	return i, err
 }
 
+const softDeleteUploadsByRealmID = `-- name: SoftDeleteUploadsByRealmID :exec
+UPDATE uploads
+SET status = 'deleted', deleted_at = NOW(), updated_at = NOW()
+WHERE realm_id = $1 AND deleted_at IS NULL
+`
+
+func (q *Queries) SoftDeleteUploadsByRealmID(ctx context.Context, realmID pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, softDeleteUploadsByRealmID, realmID)
+	return err
+}
+
 const updateUploadStatusByKey = `-- name: UpdateUploadStatusByKey :one
 UPDATE uploads
 SET status = $2, updated_at = NOW()
 WHERE s3_key = $1
-RETURNING id, title, s3_key, status, created_at, updated_at, deleted_at
+RETURNING id, realm_id, title, s3_key, status, created_at, updated_at, deleted_at
 `
 
 type UpdateUploadStatusByKeyParams struct {
@@ -137,6 +154,7 @@ func (q *Queries) UpdateUploadStatusByKey(ctx context.Context, arg UpdateUploadS
 	var i Upload
 	err := row.Scan(
 		&i.ID,
+		&i.RealmID,
 		&i.Title,
 		&i.S3Key,
 		&i.Status,

@@ -1,22 +1,21 @@
 import { AsyncPipe, DatePipe, NgForOf, NgIf } from '@angular/common';
 import { HttpEventType } from '@angular/common/http';
 import { Component, ElementRef, inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { TuiTable } from '@taiga-ui/addon-table';
 import { TuiButton, TuiIcon, TuiLoader } from '@taiga-ui/core';
 import { TuiBadge, TuiStatus } from '@taiga-ui/kit';
-import { BehaviorSubject, map, Subscription, switchMap } from 'rxjs';
+import { BehaviorSubject, EMPTY, map, Observable, Subscription, switchMap } from 'rxjs';
 import { AssetsService, Upload } from '../../core/assets/assets.service';
-import { NavbarComponent } from '../../core/navbar/navbar.component';
+import { UploadUiService } from '../../core/services/upload-ui.service';
 import { WebsocketService } from '../../core/services/websocket.service';
-import { UploadDrawerComponent } from '../upload/upload-drawer/upload-drawer.component';
+import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 import { UploadService } from '../upload/upload.service';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
   imports: [
-    NavbarComponent, 
     TuiTable, 
     NgForOf, 
     AsyncPipe, 
@@ -25,9 +24,9 @@ import { UploadService } from '../upload/upload.service';
     NgIf, 
     TuiBadge, 
     TuiStatus,
-    UploadDrawerComponent,
     TuiIcon,
-    TuiButton
+    TuiButton,
+    PageHeaderComponent
   ],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
@@ -36,16 +35,28 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private readonly assetsService = inject(AssetsService);
   private readonly websocketService = inject(WebsocketService);
   private readonly uploadService = inject(UploadService);
+  private readonly uploadUiService = inject(UploadUiService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   
   private readonly refresh$ = new BehaviorSubject<void>(undefined);
   private wsSubscription?: Subscription;
 
   readonly columns = ['ID', 'Title', 'Status', 'CreatedAt'];
-  readonly data$ = this.refresh$.pipe(
-    switchMap(() => this.assetsService.getUploads().pipe(
-      map(data => data || [])
-    ))
+  
+  private getParentParamMap(): Observable<ParamMap> {
+    return this.route.parent?.paramMap || EMPTY;
+  }
+  
+  readonly data$ = this.getParentParamMap().pipe(
+    switchMap((params: ParamMap) => {
+      const realm = params.get('realm') || 'default';
+      return this.refresh$.pipe(
+        switchMap(() => this.assetsService.getUploads(realm).pipe(
+          map(data => data || [])
+        ))
+      );
+    })
   );
 
   isDragging = false;
@@ -82,7 +93,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   onRowClick(item: Upload) {
-    this.router.navigate(['/assets', item.ID]);
+    const realm = this.route.parent?.snapshot.paramMap.get('realm') || 'default';
+    this.router.navigate(['/', realm, 'assets', item.ID]);
+  }
+
+  openUploadDrawer() {
+    this.uploadUiService.open();
   }
 
   triggerFileInput() {
@@ -124,10 +140,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   handleFile(file: File) {
+    const realm = this.route.parent?.snapshot.paramMap.get('realm') || 'default';
     this.uploading = true;
     this.progress = 0;
 
-    this.uploadService.uploadVideo(file).subscribe({
+    this.uploadService.uploadVideo(realm, file).subscribe({
       next: (event: any) => {
         if (event.type === HttpEventType.UploadProgress) {
           this.progress = Math.round(100 * event.loaded / event.total);

@@ -1,0 +1,43 @@
+<div class="page-container">
+    <app-page-header 
+        title="REALMS" 
+        buttonText="NEW REALM" 
+        (buttonClick)="openDrawer()"
+    ></app-page-header>
+    
+    <table
+        tuiTable
+        [columns]="columns"
+        class="table"
+    >
+        <thead>
+            <tr tuiThGroup>
+                <th *tuiHead="'name'" tuiTh>Name</th>
+                <th *tuiHead="'created_at'" tuiTh>Created At</th>
+            </tr>
+        </thead>
+        <tbody tuiTbody [data]="realms()">
+            <tr
+                *ngFor="let realm of realms()"
+                tuiTr
+                style="cursor: pointer"
+                (click)="onRowClick(realm)"
+            >
+                <td *tuiCell="'name'" tuiTd>
+                    {{ realm.name }}
+                </td>
+                <td *tuiCell="'created_at'" tuiTd>
+                    {{ realm.created_at | date:'medium' }}
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<app-drawer 
+    [isOpen]="isDrawerOpen()" 
+    title="NEW REALM" 
+    (close)="closeDrawer()"
+>
+    <app-create-realm (created)="onRealmCreated()"></app-create-realm>
+</app-drawer>

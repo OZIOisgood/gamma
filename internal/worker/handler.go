@@ -67,16 +67,20 @@ func (h *Handler) HandleUploadEvent(msg *nats.Msg) {
 }
 
 func (h *Handler) processVideo(ctx context.Context, key string) error {
-	// key is like "original/<uploadId>.mp4"
+	// key format: realm/original/<uploadId>.mp4
 	parts := strings.Split(key, "/")
-	if len(parts) != 2 {
-		return fmt.Errorf("invalid key format: %s", key)
+
+	if len(parts) != 3 || parts[1] != "original" {
+		// Not an original file upload, ignore (could be HLS segments etc)
+		return nil
 	}
-	filename := parts[1]
+
+	realmPrefix := parts[0]
+	filename := parts[2]
 	uploadIDStr := strings.TrimSuffix(filename, filepath.Ext(filename))
 
-	// Update status to processing
-	_, err := h.Queries.UpdateUploadStatusByKey(ctx, db.UpdateUploadStatusByKeyParams{
+	// Update status to processing and get the upload (to access realm_id)
+	upload, err := h.Queries.UpdateUploadStatusByKey(ctx, db.UpdateUploadStatusByKeyParams{
 		S3Key:  key,
 		Status: db.UploadStatusProcessing,
 	})
@@ -168,8 +172,8 @@ func (h *Handler) processVideo(ctx context.Context, key string) error {
 			return err
 		}
 
-		// S3 Key: hls/<assetId>/...
-		s3Key := filepath.Join("hls", relPath)
+		// S3 Key: [realm/]hls/<assetId>/...
+		s3Key := filepath.Join(realmPrefix, "hls", relPath)
 
 		contentType := "application/octet-stream"
 		if strings.HasSuffix(path, ".m3u8") {
@@ -193,11 +197,12 @@ func (h *Handler) processVideo(ctx context.Context, key string) error {
 	var pgUploadID pgtype.UUID
 	pgUploadID.Scan(uploadIDStr)
 
-	hlsRoot := fmt.Sprintf("hls/%s/master.m3u8", assetID.String())
+	hlsRoot := filepath.Join(realmPrefix, "hls", assetID.String(), "master.m3u8")
 
 	_, err = h.Queries.CreateAsset(ctx, db.CreateAssetParams{
 		ID:       pgAssetID,
 		UploadID: pgUploadID,
+		RealmID:  upload.RealmID,
 		HlsRoot:  hlsRoot,
 		Status:   db.AssetStatusReady,
 	})
@@ -241,9 +246,11 @@ func (h *Handler) HandleDeleteAssetEvent(msg *nats.Msg) {
 
 	assetID := event["asset_id"]
 	uploadID := event["upload_id"]
+	hlsRoot := event["hls_root"]
 
 	ctx := context.Background()
 
+	// Delete original file
 	if uploadID != "" {
 		var pgUUID pgtype.UUID
 		pgUUID.Scan(uploadID)
@@ -257,11 +264,16 @@ func (h *Handler) HandleDeleteAssetEvent(msg *nats.Msg) {
 		}
 	}
 
-	if assetID != "" {
-		prefix := fmt.Sprintf("hls/%s/", assetID)
-		if err := h.Storage.DeleteFolder(ctx, prefix); err != nil {
-			log.Printf("Failed to delete HLS folder %s: %v", prefix, err)
+	// Delete HLS folder using hls_root path (e.g., "realm/hls/assetId/master.m3u8")
+	if hlsRoot != "" {
+		// Get folder path by removing the filename
+		hlsFolder := filepath.Dir(hlsRoot) + "/"
+		if err := h.Storage.DeleteFolder(ctx, hlsFolder); err != nil {
+			log.Printf("Failed to delete HLS folder %s: %v", hlsFolder, err)
 		}
+	} else if assetID != "" {
+		// Fallback: try without realm prefix (shouldn't happen in MVP)
+		log.Printf("Warning: hls_root not provided, using fallback path for asset %s", assetID)
 	}
 
 	msg.Ack()

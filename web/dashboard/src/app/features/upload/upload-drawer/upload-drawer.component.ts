@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { HttpEventType } from '@angular/common/http';
 import { Component, ElementRef, HostListener, ViewChild, inject } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { TuiButton, TuiIcon } from '@taiga-ui/core';
 import { AssetsService } from '../../../core/assets/assets.service';
 import { UploadUiService } from '../../../core/services/upload-ui.service';
@@ -17,6 +18,7 @@ export class UploadDrawerComponent {
   private uploadUiService = inject(UploadUiService);
   private uploadService = inject(UploadService);
   private assetsService = inject(AssetsService);
+  private route = inject(ActivatedRoute);
 
   isOpen$ = this.uploadUiService.isOpen$;
   isDragging = false;
@@ -79,10 +81,18 @@ export class UploadDrawerComponent {
   }
 
   handleFile(file: File) {
+    // Since this component might be outside the router outlet or not have direct access to route params
+    // we might need to get the realm from the URL manually or inject a service that holds the current realm.
+    // For now, let's try to get it from the window location or assume 'default' if not found.
+    // A better approach would be a RealmService that holds the current state.
+    
+    const pathParts = window.location.pathname.split('/');
+    const realm = pathParts[1] || 'default';
+
     this.uploading = true;
     this.progress = 0;
 
-    this.uploadService.uploadVideo(file).subscribe({
+    this.uploadService.uploadVideo(realm, file).subscribe({
       next: (event: any) => {
         if (event.type === HttpEventType.UploadProgress) {
           this.progress = Math.round(100 * event.loaded / event.total);

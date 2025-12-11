@@ -9,6 +9,7 @@ import (
 	"github.com/OZIOisgood/gamma/internal/auth"
 	"github.com/OZIOisgood/gamma/internal/db"
 	"github.com/OZIOisgood/gamma/internal/events"
+	"github.com/OZIOisgood/gamma/internal/realms"
 	"github.com/OZIOisgood/gamma/internal/storage"
 	"github.com/OZIOisgood/gamma/internal/uploads"
 	"github.com/go-chi/chi/v5"
@@ -61,10 +62,15 @@ func (s *Server) routes() {
 	storageService := s.initStorage()
 
 	uploadsHandler := uploads.NewHandler(storageService, queries, s.EventBus)
+	realmsHandler := realms.NewHandler(queries)
 
 	s.Router.Group(func(r chi.Router) {
 		r.Use(auth.Middleware)
-		uploadsHandler.RegisterRoutes(r)
+		realmsHandler.RegisterRoutes(r)
+		
+		r.Route("/{realm}", func(r chi.Router) {
+			uploadsHandler.RegisterRoutes(r)
+		})
 	})
 }
 

@@ -1,0 +1,15 @@
+<div class="page-container" *ngIf="realm()">
+    <div class="header">
+        <h1 class="page-title">{{ realm()!.name }}</h1>
+        <button
+            tuiButton
+            appearance="accent"
+            size="m"
+            class="delete-btn"
+            [disabled]="!canDelete()"
+            (click)="deleteRealm()"
+        >
+            Delete Realm
+        </button>
+    </div>
+</div>

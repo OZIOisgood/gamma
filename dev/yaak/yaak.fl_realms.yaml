@@ -1,0 +1,13 @@
+type: folder
+model: folder
+id: fl_realms
+createdAt: 2025-12-10T12:00:00
+updatedAt: 2025-12-11T15:59:13.593203
+workspaceId: wk_gamma
+folderId: null
+authentication: {}
+authenticationType: null
+description: ''
+headers: []
+name: Realms
+sortPriority: 3000.0

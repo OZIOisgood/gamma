@@ -14,5 +14,9 @@ variables:
   name: BASE_URL
   value: http://localhost:8080
   id: DUrEPtbJ6U
+- enabled: true
+  name: REALM
+  value: default
+  id: realm_var_id
 color: var(--info)
 sortPriority: 0.0

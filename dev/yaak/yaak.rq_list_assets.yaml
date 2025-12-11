@@ -14,5 +14,5 @@ headers: []
 method: GET
 name: List Assets
 sortPriority: 23.333333333333332
-url: ${[BASE_URL]}/assets
+url: ${[BASE_URL]}/${[REALM]}/assets
 urlParameters: []

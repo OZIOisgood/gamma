@@ -41,7 +41,19 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 }
 
 func (h *Handler) ListAssets(w http.ResponseWriter, r *http.Request) {
-	assets, err := h.Queries.ListAssets(r.Context())
+	realmName := chi.URLParam(r, "realm")
+	if realmName == "" {
+		http.Error(w, "Realm is required", http.StatusBadRequest)
+		return
+	}
+
+	realm, err := h.Queries.GetRealmByName(r.Context(), realmName)
+	if err != nil {
+		http.Error(w, "Realm not found", http.StatusNotFound)
+		return
+	}
+
+	assets, err := h.Queries.ListAssets(r.Context(), realm.ID)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to list assets: %v", err), http.StatusInternalServerError)
 		return
@@ -52,7 +64,19 @@ func (h *Handler) ListAssets(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
-	videos, err := h.Queries.ListUploads(r.Context())
+	realmName := chi.URLParam(r, "realm")
+	if realmName == "" {
+		http.Error(w, "Realm is required", http.StatusBadRequest)
+		return
+	}
+
+	realm, err := h.Queries.GetRealmByName(r.Context(), realmName)
+	if err != nil {
+		http.Error(w, "Realm not found", http.StatusNotFound)
+		return
+	}
+
+	videos, err := h.Queries.ListUploads(r.Context(), realm.ID)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to list videos: %v", err), http.StatusInternalServerError)
 		return
@@ -92,6 +116,18 @@ type CreateUploadResponse struct {
 }
 
 func (h *Handler) CreateUpload(w http.ResponseWriter, r *http.Request) {
+	realmName := chi.URLParam(r, "realm")
+	if realmName == "" {
+		http.Error(w, "Realm is required", http.StatusBadRequest)
+		return
+	}
+
+	realm, err := h.Queries.GetRealmByName(r.Context(), realmName)
+	if err != nil {
+		http.Error(w, "Realm not found", http.StatusNotFound)
+		return
+	}
+
 	var req CreateUploadRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -109,7 +145,8 @@ func (h *Handler) CreateUpload(w http.ResponseWriter, r *http.Request) {
 	if ext == "" {
 		ext = ".mp4"
 	}
-	key := fmt.Sprintf("original/%s%s", videoID.String(), ext)
+	// Key format: realm/original/uuid.ext
+	key := fmt.Sprintf("%s/original/%s%s", realmName, videoID.String(), ext)
 
 	// Generate presigned URL
 	ctx := r.Context()
@@ -124,11 +161,11 @@ func (h *Handler) CreateUpload(w http.ResponseWriter, r *http.Request) {
 	pgUUID.Scan(videoID.String())
 
 	_, err = h.Queries.CreateUpload(ctx, db.CreateUploadParams{
-
-		ID:     pgUUID,
-		Title:  req.Filename,
-		S3Key:  key,
-		Status: db.UploadStatusPending,
+		ID:      pgUUID,
+		Title:   req.Filename,
+		S3Key:   key,
+		Status:  db.UploadStatusPending,
+		RealmID: realm.ID,
 	})
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to create upload record: %v", err), http.StatusInternalServerError)
@@ -250,6 +287,7 @@ func (h *Handler) DeleteAsset(w http.ResponseWriter, r *http.Request) {
 	eventData := map[string]string{
 		"asset_id":  idStr,
 		"upload_id": uploadIDStr,
+		"hls_root":  asset.HlsRoot,
 	}
 
 	payload, err := json.Marshal(eventData)

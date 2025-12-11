@@ -16,9 +16,9 @@ export class UploadService {
 
   constructor(private http: HttpClient) {}
 
-  uploadVideo(file: File): Observable<any> {
+  uploadVideo(realm: string, file: File): Observable<any> {
     // 1. Create upload session
-    return this.http.post<CreateUploadResponse>(`${this.apiUrl}/uploads`, {
+    return this.http.post<CreateUploadResponse>(`${this.apiUrl}/${realm}/uploads`, {
       filename: file.name
     }, { withCredentials: true }).pipe(
       // 2. Upload file to presigned URL

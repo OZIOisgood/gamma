@@ -19,5 +19,5 @@ headers:
 method: POST
 name: Create Upload
 sortPriority: 0.0
-url: ${[BASE_URL]}/uploads
+url: ${[BASE_URL]}/${[REALM]}/uploads
 urlParameters: []

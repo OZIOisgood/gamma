@@ -1,6 +1,5 @@
 # Issues / Roadmap
 
-- [x] Delete assets
 - [ ] Search (Elasticsearch)
 - [ ] i18n for dashboard
 - [ ] Security improvements
@@ -11,7 +10,6 @@
 - [ ] Client player
 - [ ] Preview GIFs
 - [ ] Thumbnails
-- [ ] Environment selection in dashboard (dev, qa, prod)
 - [ ] SDKs for popular languages
 - [ ] CORS configuration
 - [ ] Webhooks

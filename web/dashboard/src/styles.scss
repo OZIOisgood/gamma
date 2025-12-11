@@ -51,15 +51,6 @@ tui-icon {
   text-transform: uppercase;
 }
 
-.page-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  margin: 0;
-  text-align: center;
-}
-
 .input-label {
   font-size: 0.75rem;
   color: #666;
@@ -149,4 +140,17 @@ table[tuiTable] {
   }
 }
 
+/* Layout Helpers */
+.page-container {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
 
+.page-title {
+  font-size: 3rem;
+  font-weight: 900;
+  margin-bottom: 2rem;
+  text-transform: uppercase;
+  letter-spacing: -0.05em;
+}

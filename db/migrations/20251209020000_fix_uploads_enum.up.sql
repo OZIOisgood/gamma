@@ -1,1 +1,0 @@
-ALTER TYPE upload_status ADD VALUE IF NOT EXISTS 'deleted';

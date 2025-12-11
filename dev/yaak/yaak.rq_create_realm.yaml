@@ -1,0 +1,23 @@
+type: http_request
+model: http_request
+id: rq_create_realm
+createdAt: 2025-12-10T12:00:00
+updatedAt: 2025-12-10T12:00:00
+workspaceId: wk_gamma
+folderId: fl_realms
+authentication: {}
+authenticationType: null
+body:
+  text: "{\n\t\"name\": \"dev\"\n}"
+bodyType: application/json
+description: ''
+headers:
+- enabled: true
+  name: Content-Type
+  value: application/json
+  id: realm_content_type
+method: POST
+name: Create Realm
+sortPriority: 10.0
+url: ${[BASE_URL]}/realms
+urlParameters: []

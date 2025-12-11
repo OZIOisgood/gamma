@@ -110,16 +110,8 @@ func (s *Storage) EnsureBucketNotification(ctx context.Context) error {
 					Events: []types.Event{
 						types.EventS3ObjectCreatedPut,
 					},
-					Filter: &types.NotificationConfigurationFilter{
-						Key: &types.S3KeyFilter{
-							FilterRules: []types.FilterRule{
-								{
-									Name:  types.FilterRuleNamePrefix,
-									Value: aws.String("original/"),
-								},
-							},
-						},
-					},
+					// Remove prefix filter to allow dynamic realms (e.g. realm/original/...)
+					// The worker will need to filter events based on the key pattern.
 				},
 			},
 		},
@@ -140,7 +132,7 @@ func (s *Storage) EnsureHLSPublicPolicy(ctx context.Context) error {
 					"AWS": ["*"]
 				},
 				"Action": ["s3:GetObject"],
-				"Resource": ["arn:aws:s3:::%s/hls/*"]
+				"Resource": ["arn:aws:s3:::%s/*/hls/*"]
 			}
 		]
 	}`, s.Bucket)

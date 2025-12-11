@@ -1,4 +1,4 @@
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideAnimations } from "@angular/platform-browser/animations";
 import { provideRouter } from '@angular/router';
@@ -6,12 +6,13 @@ import { provideEventPlugins } from "@taiga-ui/event-plugins";
 import { tuiPasswordOptionsProvider } from '@taiga-ui/kit';
 
 import { routes } from './app.routes';
+import { authInterceptor } from './core/auth/auth.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
         provideAnimations(),
         provideBrowserGlobalErrorListeners(),
-        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClient(withInterceptors([authInterceptor])),
     provideRouter(routes),
         provideEventPlugins(),
         tuiPasswordOptionsProvider({

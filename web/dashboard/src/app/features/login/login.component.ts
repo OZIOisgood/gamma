@@ -1,10 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TuiIcon, TuiTextfield } from '@taiga-ui/core';
 import { TuiPassword } from '@taiga-ui/kit';
 import { AuthService } from '../../core/auth/auth.service';
+import { RealmService } from '../../core/services/realm.service';
 
 @Component({
   selector: 'app-login',
@@ -28,6 +29,8 @@ export class LoginComponent {
   loading = false;
   error = '';
 
+  private readonly realmService = inject(RealmService);
+
   constructor(
     private authService: AuthService,
     private router: Router
@@ -41,7 +44,10 @@ export class LoginComponent {
       this.authService.login(this.loginForm.value).subscribe({
         next: () => {
           this.loading = false;
-          this.router.navigate(['/dashboard']);
+          this.realmService.list().subscribe(realms => {
+            const firstRealm = realms.length > 0 ? realms[0].name : 'default';
+            this.router.navigate([`/${firstRealm}/dashboard`]);
+          });
         },
         error: (err) => {
           this.loading = false;

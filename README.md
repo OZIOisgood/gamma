@@ -37,6 +37,18 @@ Gamma is a distributed video processing platform (a Mux-like) designed to handle
    ```
    Access the dashboard at `http://localhost:4200`.
 
+5. **Login**:
+   - Username: `admin`
+   - Password: `admin`
+
+## Realms
+
+Gamma supports multi-tenancy through **Realms**. Each realm is an isolated environment with its own uploads and assets. A `default` realm is created automatically on first run.
+
+- Create, list, and delete realms from the dashboard
+- Switch between realms using the dropdown in the navbar
+- All uploads and assets are scoped to a realm
+
 ## How does it work?
 
 ## System Architecture
@@ -87,6 +99,50 @@ flowchart TB
     classDef db fill:#1a237e,stroke:#7986cb,stroke-width:2px,color:#fff
 ```
 
+## Database Schema
+
+```mermaid
+erDiagram
+    realms {
+        UUID id PK
+        VARCHAR name UK
+        realm_status status
+        TIMESTAMPTZ created_at
+        TIMESTAMPTZ deleted_at
+    }
+    
+    uploads {
+        UUID id PK
+        UUID realm_id FK
+        TEXT title
+        TEXT s3_key
+        upload_status status
+        TIMESTAMPTZ created_at
+        TIMESTAMPTZ updated_at
+        TIMESTAMPTZ deleted_at
+    }
+    
+    assets {
+        UUID id PK
+        UUID upload_id FK
+        UUID realm_id FK
+        TEXT hls_root
+        asset_status status
+        TIMESTAMPTZ created_at
+        TIMESTAMPTZ updated_at
+        TIMESTAMPTZ deleted_at
+    }
+
+    realms ||--o{ uploads : "has many"
+    realms ||--o{ assets : "has many"
+    uploads ||--o| assets : "has one"
+```
+
+**Enums:**
+- `realm_status`: `active`, `deleted`
+- `upload_status`: `pending`, `uploaded`, `processing`, `ready`, `failed`, `deleted`
+- `asset_status`: `processing`, `ready`, `failed`, `deleted`
+
 ## Detailed Flows
 
 ### 1. Upload & Processing Flow
@@ -102,7 +158,7 @@ sequenceDiagram
     participant Worker
 
     User->>Dash: Select Video File
-    Dash->>API: POST /uploads
+    Dash->>API: POST /{realm}/uploads
     API->>S3: Generate Presigned URL
     API->>DB: Create Upload (pending)
     API-->>Dash: Return UploadID, URL
@@ -136,7 +192,7 @@ sequenceDiagram
     participant S3 as MinIO
 
     User->>Dash: Click Delete
-    Dash->>API: DELETE /assets/{id}
+    Dash->>API: DELETE /{realm}/assets/{id}
     API->>DB: Soft Delete Asset
     API->>DB: Soft Delete Upload
     API->>NATS: Event: delete_asset
@@ -168,6 +224,8 @@ Gamma is built using a microservices architecture:
 - Asynchronous worker processing
 - Basic Dashboard UI
 - Multi-quality transcoding (ABR)
+- Multi-tenancy with Realms
+- Authentication (login/logout)
 
 ### To Do
 See [ISSUES.md](ISSUES.md) for the full roadmap and todo list.

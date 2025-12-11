@@ -1,0 +1,18 @@
+type: http_request
+model: http_request
+id: rq_delete_realm
+createdAt: 2025-12-10T12:00:00
+updatedAt: 2025-12-10T12:00:00
+workspaceId: wk_gamma
+folderId: fl_realms
+authentication: {}
+authenticationType: null
+body: {}
+bodyType: null
+description: 'Soft deletes a realm. Cannot delete the last remaining realm.'
+headers: []
+method: DELETE
+name: Delete Realm
+sortPriority: 30.0
+url: ${[BASE_URL]}/realms/${[ response.body.path(request='rq_list_realms', path=b64'JFswXS5pZA', behavior='smart') ]}
+urlParameters: []

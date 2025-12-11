@@ -14,5 +14,5 @@ headers: []
 method: GET
 name: List Uploads
 sortPriority: 6.666666666666667
-url: ${[BASE_URL]}/uploads
+url: ${[BASE_URL]}/${[REALM]}/uploads
 urlParameters: []

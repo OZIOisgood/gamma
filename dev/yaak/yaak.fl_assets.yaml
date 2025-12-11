@@ -1,8 +1,13 @@
 type: folder
 model: folder
 id: fl_assets
+createdAt: 2025-11-23T19:30:00
+updatedAt: 2025-12-11T15:59:13.591576
 workspaceId: wk_gamma
-createdAt: 2025-11-23T19:30:00.000000
-updatedAt: 2025-11-23T19:30:00.000000
+folderId: null
+authentication: {}
+authenticationType: null
+description: ''
+headers: []
 name: Assets
-sortPriority: 0
+sortPriority: 2000.0

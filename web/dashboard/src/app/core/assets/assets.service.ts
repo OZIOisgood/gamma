@@ -28,34 +28,33 @@ export interface PlaylistResponse {
   providedIn: 'root',
 })
 export class AssetsService {
-  private readonly apiUrl = 'http://localhost:8080/uploads';
-  private readonly assetsUrl = 'http://localhost:8080/assets';
+  private readonly baseUrl = 'http://localhost:8080';
   private refreshSubject = new BehaviorSubject<void>(undefined);
 
   constructor(private http: HttpClient) {}
 
-  getUploads(): Observable<Upload[]> {
+  getUploads(realm: string): Observable<Upload[]> {
     return this.refreshSubject.pipe(
-      switchMap(() => this.http.get<Upload[]>(this.apiUrl, {
+      switchMap(() => this.http.get<Upload[]>(`${this.baseUrl}/${realm}/uploads`, {
         withCredentials: true,
       }))
     );
   }
 
-  getAsset(id: string): Observable<Asset> {
-    return this.http.get<Asset>(`${this.assetsUrl}/${id}`, {
+  getAsset(realm: string, id: string): Observable<Asset> {
+    return this.http.get<Asset>(`${this.baseUrl}/${realm}/assets/${id}`, {
       withCredentials: true,
     });
   }
 
-  deleteAsset(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.assetsUrl}/${id}`, {
+  getPlaylist(realm: string, id: string): Observable<PlaylistResponse> {
+    return this.http.get<PlaylistResponse>(`${this.baseUrl}/${realm}/assets/${id}/playlist`, {
       withCredentials: true,
     });
   }
 
-  getAssetPlaylist(id: string): Observable<PlaylistResponse> {
-    return this.http.get<PlaylistResponse>(`${this.assetsUrl}/${id}/playlist`, {
+  deleteAsset(realm: string, id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${realm}/assets/${id}`, {
       withCredentials: true,
     });
   }

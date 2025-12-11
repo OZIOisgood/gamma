@@ -1,0 +1,13 @@
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.delete-btn {
+    --tui-background-accent-1: #ff0000;
+    --tui-background-accent-2: #ff0000;
+    --tui-background-accent-2-hover: #cc0000;
+    --tui-text-01: white;
+}

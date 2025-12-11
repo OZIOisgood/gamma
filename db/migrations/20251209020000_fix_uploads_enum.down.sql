@@ -1,1 +1,0 @@
--- Cannot remove enum value easily

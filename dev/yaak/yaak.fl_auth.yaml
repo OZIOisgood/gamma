@@ -1,8 +1,13 @@
 type: folder
 model: folder
 id: fl_auth
+createdAt: 2025-11-23T19:30:00
+updatedAt: 2025-12-11T15:59:13.587697
 workspaceId: wk_gamma
-createdAt: 2025-11-23T19:30:00.000000
-updatedAt: 2025-11-23T19:30:00.000000
+folderId: null
+authentication: {}
+authenticationType: null
+description: ''
+headers: []
 name: Auth
-sortPriority: 0
+sortPriority: 0.0

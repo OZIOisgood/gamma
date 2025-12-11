@@ -7,7 +7,6 @@ import { TuiBadge, TuiStatus } from '@taiga-ui/kit';
 import { of, Subscription } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { Asset, AssetsService } from '../../../core/assets/assets.service';
-import { NavbarComponent } from '../../../core/navbar/navbar.component';
 import { PlayerComponent } from '../../../core/player/player.component';
 
 @Component({
@@ -19,7 +18,6 @@ import { PlayerComponent } from '../../../core/player/player.component';
     TuiButton,
     TuiBadge, 
     TuiStatus, 
-    NavbarComponent, 
     TuiTable,
     NgForOf,
     NgSwitch,
@@ -59,17 +57,18 @@ export class AssetDetailComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');
+    const realm = this.route.parent?.snapshot.paramMap.get('realm') || 'default';
     if (!id) {
       this.error.set('No asset ID provided');
       this.loading.set(false);
       return;
     }
 
-    this.sub = this.assetsService.getAsset(id).pipe(
+    this.sub = this.assetsService.getAsset(realm, id).pipe(
       tap(asset => {
         this.asset.set(asset);
         if (this.isReady(asset)) {
-          this.initPlayer(id);
+          this.initPlayer(realm, id);
         } else {
           this.loading.set(false);
         }
@@ -104,8 +103,8 @@ export class AssetDetailComponent implements OnInit, OnDestroy {
     }
   }
 
-  private initPlayer(id: string) {
-    this.assetsService.getAssetPlaylist(id).subscribe({
+  private initPlayer(realm: string, id: string) {
+    this.assetsService.getPlaylist(realm, id).subscribe({
       next: (response) => {
         this.loading.set(false);
         this.playlistUrl.set(response.url);
@@ -119,12 +118,13 @@ export class AssetDetailComponent implements OnInit, OnDestroy {
 
   deleteAsset() {
     const asset = this.asset();
+    const realm = this.route.parent?.snapshot.paramMap.get('realm') || 'default';
     if (!asset) return;
 
     if (confirm('Are you sure you want to delete this asset?')) {
-      this.assetsService.deleteAsset(asset.ID).subscribe({
+      this.assetsService.deleteAsset(realm, asset.ID).subscribe({
         next: () => {
-          this.router.navigate(['/']);
+          this.router.navigate(['/', realm, 'dashboard']);
         },
         error: (err) => {
           console.error('Failed to delete asset', err);
