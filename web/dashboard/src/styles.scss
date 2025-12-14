@@ -154,3 +154,24 @@ table[tuiTable] {
   text-transform: uppercase;
   letter-spacing: -0.05em;
 }
+
+/* Confirmation Dialog Styles */
+tui-dialog[data-appearance='confirm-dialog'] {
+  margin: auto;
+  border: none;
+  border-radius: 0;
+  background: #fff;
+  
+  .t-heading {
+    display: none;
+  }
+
+  .t-close {
+    border-radius: 0 !important;
+    color: #000;
+    
+    &:hover {
+      background: rgba(0, 0, 0, 0.05);
+    }
+  }
+}

@@ -56,6 +56,9 @@ importers:
       '@taiga-ui/layout':
         specifier: ^4.61.0
         version: 4.61.0(@angular/common@21.0.0(@angular/core@21.0.0(@angular/compiler@21.0.0)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.0.0(@angular/compiler@21.0.0)(rxjs@7.8.2))(@taiga-ui/cdk@4.61.0(a07cb60b36b5e9b0a27d90e6414983fb))(@taiga-ui/core@4.61.0(dcb741e7bce29907688e9b8ea556a682))(@taiga-ui/kit@4.61.0(174a8f46739dbf74762416d1cba44f5a))(@taiga-ui/polymorpheus@4.9.0(@angular/core@21.0.0(@angular/compiler@21.0.0)(rxjs@7.8.2))(@angular/platform-browser@21.0.0(@angular/animations@21.0.0(@angular/core@21.0.0(@angular/compiler@21.0.0)(rxjs@7.8.2)))(@angular/common@21.0.0(@angular/core@21.0.0(@angular/compiler@21.0.0)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.0.0(@angular/compiler@21.0.0)(rxjs@7.8.2))))(rxjs@7.8.2)
+      '@taiga-ui/polymorpheus':
+        specifier: ^4.9.0
+        version: 4.9.0(@angular/core@21.0.0(@angular/compiler@21.0.0)(rxjs@7.8.2))(@angular/platform-browser@21.0.0(@angular/animations@21.0.0(@angular/core@21.0.0(@angular/compiler@21.0.0)(rxjs@7.8.2)))(@angular/common@21.0.0(@angular/core@21.0.0(@angular/compiler@21.0.0)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.0.0(@angular/compiler@21.0.0)(rxjs@7.8.2)))
       hls-video-element:
         specifier: ^1.5.10
         version: 1.5.10

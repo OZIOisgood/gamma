@@ -8,6 +8,7 @@ import { of, Subscription } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { Asset, AssetsService } from '../../../core/assets/assets.service';
 import { PlayerComponent } from '../../../core/player/player.component';
+import { ConfirmDialogService } from '../../../shared/services/confirm-dialog.service';
 
 @Component({
   selector: 'app-asset-detail',
@@ -33,6 +34,7 @@ export class AssetDetailComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private assetsService = inject(AssetsService);
+  private confirmDialog = inject(ConfirmDialogService);
   
   asset = signal<Asset | null>(null);
   playlistUrl = signal<string>('');
@@ -121,15 +123,22 @@ export class AssetDetailComponent implements OnInit, OnDestroy {
     const realm = this.route.parent?.snapshot.paramMap.get('realm') || 'default';
     if (!asset) return;
 
-    if (confirm('Are you sure you want to delete this asset?')) {
-      this.assetsService.deleteAsset(realm, asset.ID).subscribe({
-        next: () => {
-          this.router.navigate(['/', realm, 'dashboard']);
-        },
-        error: (err) => {
-          console.error('Failed to delete asset', err);
-        }
-      });
-    }
+    this.confirmDialog.confirm({
+      title: 'Delete Asset',
+      message: 'Are you sure you want to delete this asset? This action cannot be undone.',
+      confirmText: 'Delete',
+      cancelText: 'Cancel'
+    }).subscribe(confirmed => {
+      if (confirmed) {
+        this.assetsService.deleteAsset(realm, asset.ID).subscribe({
+          next: () => {
+            this.router.navigate(['/', realm, 'dashboard']);
+          },
+          error: (err) => {
+            console.error('Failed to delete asset', err);
+          }
+        });
+      }
+    });
   }
 }

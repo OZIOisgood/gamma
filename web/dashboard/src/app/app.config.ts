@@ -2,6 +2,7 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideAnimations } from "@angular/platform-browser/animations";
 import { provideRouter } from '@angular/router';
+import { tuiCommonIconsProvider } from '@taiga-ui/core';
 import { provideEventPlugins } from "@taiga-ui/event-plugins";
 import { tuiPasswordOptionsProvider } from '@taiga-ui/kit';
 
@@ -15,6 +16,9 @@ export const appConfig: ApplicationConfig = {
         provideHttpClient(withInterceptors([authInterceptor])),
     provideRouter(routes),
         provideEventPlugins(),
+        tuiCommonIconsProvider({
+            close: '@tui.material.sharp.close',
+        }),
         tuiPasswordOptionsProvider({
             icons: {
                 hide: '@tui.material.sharp.visibility_off',
