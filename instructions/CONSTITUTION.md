@@ -20,3 +20,7 @@
 ## 5. Task Management
 - **Protocol**: Follow the guidelines in [TASK_CONSTITUTION.md](TASK_CONSTITUTION.md).
 - **Issues**: Check `ISSUES.md` for the roadmap and task status.
+
+## 6. Troubleshooting & Knowledge Base
+- **Common Issues**: Before debugging complex problems, check `instructions/common_issues/` for known solutions.
+- **Documentation**: If you solve a non-trivial recurring issue, document it in `instructions/common_issues/` following the existing pattern.

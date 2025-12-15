@@ -4,7 +4,7 @@
 Every significant change or feature implementation must be tracked as a discrete task. This ensures traceability, context preservation, and a clear history of decisions.
 
 ## 2. Task Structure
-All tasks are stored in the `tasks/` directory at the project root.
+All tasks are stored in the `instructions/tasks/` directory at the project root.
 
 ### Naming Convention
 Folder name: `YYYYMMDDHHMMSS_snake_case_description`
@@ -20,7 +20,7 @@ Each task folder must contain:
 ### 1. Creation
 Use the helper script to generate a new task:
 ```bash
-./scripts/create_task.sh "my task name"
+./instructions/scripts/create_task.sh "my task name"
 ```
 This creates the folder and template files.
 

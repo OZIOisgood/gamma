@@ -14,7 +14,7 @@ TASK_NAME=$(echo "$1" | tr '[:upper:]' '[:lower:]' | tr ' ' '_')
 
 # Create directory name
 DIR_NAME="${TIMESTAMP}_${TASK_NAME}"
-TASK_DIR="tasks/${DIR_NAME}"
+TASK_DIR="instructions/tasks/${DIR_NAME}"
 
 # Create directory
 mkdir -p "$TASK_DIR"

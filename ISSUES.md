@@ -15,4 +15,4 @@
 - [ ] DRM
 - [ ] Test flag on asset (watermark + 10s limit + auto-delete after 24h)
 - [ ] Metadata support: title, creator_id, external_id
-- [ ] Add common issues instructions to constitution
+- [x] Add common issues instructions to constitution
