@@ -19,6 +19,31 @@ import (
 	"github.com/nats-io/nats.go"
 )
 
+type ProbeData struct {
+	Streams []struct {
+		Width  int `json:"width"`
+		Height int `json:"height"`
+	} `json:"streams"`
+}
+
+type Quality struct {
+	Height       int
+	Width        int
+	Bitrate      string
+	MaxRate      string
+	BufSize      string
+	AudioBitrate string
+}
+
+var availableQualities = []Quality{
+	{1080, 1920, "5000k", "5350k", "7500k", "192k"},
+	{720, 1280, "2800k", "2996k", "4200k", "128k"},
+	{480, 854, "1400k", "1498k", "2100k", "96k"},
+	{360, 640, "800k", "856k", "1200k", "96k"},
+	{240, 426, "400k", "428k", "600k", "64k"},
+	{144, 256, "200k", "214k", "300k", "64k"},
+}
+
 type Handler struct {
 	Queries    *db.Queries
 	Storage    *storage.Storage
@@ -33,6 +58,31 @@ func NewHandler(queries *db.Queries, storage *storage.Storage, eventBus *events.
 		EventBus:   eventBus,
 		WorkerName: workerName,
 	}
+}
+
+func (h *Handler) getVideoDimensions(filePath string) (int, int, error) {
+	cmd := exec.Command("ffprobe",
+		"-v", "error",
+		"-select_streams", "v:0",
+		"-show_entries", "stream=width,height",
+		"-of", "json",
+		filePath,
+	)
+	output, err := cmd.Output()
+	if err != nil {
+		return 0, 0, err
+	}
+
+	var data ProbeData
+	if err := json.Unmarshal(output, &data); err != nil {
+		return 0, 0, err
+	}
+
+	if len(data.Streams) == 0 {
+		return 0, 0, fmt.Errorf("no video streams found")
+	}
+
+	return data.Streams[0].Width, data.Streams[0].Height, nil
 }
 
 func (h *Handler) HandleUploadEvent(msg *nats.Msg) {
@@ -101,6 +151,25 @@ func (h *Handler) processVideo(ctx context.Context, key string) error {
 		return fmt.Errorf("failed to download file: %w", err)
 	}
 
+	// Get video dimensions
+	width, height, err := h.getVideoDimensions(localInput)
+	if err != nil {
+		return fmt.Errorf("failed to get video dimensions: %w", err)
+	}
+	log.Printf("Input video dimensions: %dx%d", width, height)
+
+	// Filter qualities
+	var targetQualities []Quality
+	for _, q := range availableQualities {
+		if q.Height <= height {
+			targetQualities = append(targetQualities, q)
+		}
+	}
+	if len(targetQualities) == 0 {
+		// Fallback to lowest quality if input is smaller than 144p
+		targetQualities = append(targetQualities, availableQualities[len(availableQualities)-1])
+	}
+
 	// Generate Asset ID
 	assetID := uuid.New()
 	hlsDir := filepath.Join(tmpDir, "hls", assetID.String())
@@ -109,47 +178,52 @@ func (h *Handler) processVideo(ctx context.Context, key string) error {
 	}
 
 	// Run ffmpeg with multi-quality support
-	// We will generate 6 variants: 1080p, 720p, 480p, 360p, 240p, 144p
 	masterPlaylist := "master.m3u8"
-	
-	// Ensure output directories exist for variants
-	cmd := exec.Command("ffmpeg",
-		"-i", localInput,
-		"-filter_complex", "[0:v]split=6[v1][v2][v3][v4][v5][v6];[v1]scale=w=1920:h=1080:force_original_aspect_ratio=decrease,pad=ceil(iw/2)*2:ceil(ih/2)*2[v1out];[v2]scale=w=1280:h=720:force_original_aspect_ratio=decrease,pad=ceil(iw/2)*2:ceil(ih/2)*2[v2out];[v3]scale=w=854:h=480:force_original_aspect_ratio=decrease,pad=ceil(iw/2)*2:ceil(ih/2)*2[v3out];[v4]scale=w=640:h=360:force_original_aspect_ratio=decrease,pad=ceil(iw/2)*2:ceil(ih/2)*2[v4out];[v5]scale=w=426:h=240:force_original_aspect_ratio=decrease,pad=ceil(iw/2)*2:ceil(ih/2)*2[v5out];[v6]scale=w=256:h=144:force_original_aspect_ratio=decrease,pad=ceil(iw/2)*2:ceil(ih/2)*2[v6out]",
-		
-		// 1080p
-		"-map", "[v1out]", "-c:v:0", "libx264", "-b:v:0", "5000k", "-maxrate:v:0", "5350k", "-bufsize:v:0", "7500k",
-		"-map", "a:0", "-c:a:0", "aac", "-b:a:0", "192k", "-ac", "2",
-		
-		// 720p
-		"-map", "[v2out]", "-c:v:1", "libx264", "-b:v:1", "2800k", "-maxrate:v:1", "2996k", "-bufsize:v:1", "4200k",
-		"-map", "a:0", "-c:a:1", "aac", "-b:a:1", "128k", "-ac", "2",
-		
-		// 480p
-		"-map", "[v3out]", "-c:v:2", "libx264", "-b:v:2", "1400k", "-maxrate:v:2", "1498k", "-bufsize:v:2", "2100k",
-		"-map", "a:0", "-c:a:2", "aac", "-b:a:2", "96k", "-ac", "2",
 
-		// 360p
-		"-map", "[v4out]", "-c:v:3", "libx264", "-b:v:3", "800k", "-maxrate:v:3", "856k", "-bufsize:v:3", "1200k",
-		"-map", "a:0", "-c:a:3", "aac", "-b:a:3", "96k", "-ac", "2",
+	// Build ffmpeg command dynamically
+	args := []string{"-i", localInput}
 
-		// 240p
-		"-map", "[v5out]", "-c:v:4", "libx264", "-b:v:4", "400k", "-maxrate:v:4", "428k", "-bufsize:v:4", "600k",
-		"-map", "a:0", "-c:a:4", "aac", "-b:a:4", "64k", "-ac", "2",
+	// Filter complex
+	filterComplex := fmt.Sprintf("[0:v]split=%d", len(targetQualities))
+	for i := 0; i < len(targetQualities); i++ {
+		filterComplex += fmt.Sprintf("[v%d]", i+1)
+	}
+	filterComplex += ";"
+	for i, q := range targetQualities {
+		filterComplex += fmt.Sprintf("[v%d]scale=w=%d:h=%d:force_original_aspect_ratio=decrease,pad=ceil(iw/2)*2:ceil(ih/2)*2[v%dout];", i+1, q.Width, q.Height, i+1)
+	}
+	filterComplex = strings.TrimSuffix(filterComplex, ";")
+	args = append(args, "-filter_complex", filterComplex)
 
-		// 144p
-		"-map", "[v6out]", "-c:v:5", "libx264", "-b:v:5", "200k", "-maxrate:v:5", "214k", "-bufsize:v:5", "300k",
-		"-map", "a:0", "-c:a:5", "aac", "-b:a:5", "64k", "-ac", "2",
+	// Map streams
+	varStreamMap := ""
+	for i, q := range targetQualities {
+		args = append(args,
+			"-map", fmt.Sprintf("[v%dout]", i+1),
+			fmt.Sprintf("-c:v:%d", i), "libx264",
+			fmt.Sprintf("-b:v:%d", i), q.Bitrate,
+			fmt.Sprintf("-maxrate:v:%d", i), q.MaxRate,
+			fmt.Sprintf("-bufsize:v:%d", i), q.BufSize,
+			"-map", "a:0",
+			fmt.Sprintf("-c:a:%d", i), "aac",
+			fmt.Sprintf("-b:a:%d", i), q.AudioBitrate,
+			"-ac", "2",
+		)
+		varStreamMap += fmt.Sprintf("v:%d,a:%d ", i, i)
+	}
 
+	args = append(args,
 		"-f", "hls",
 		"-hls_time", "10",
 		"-hls_playlist_type", "vod",
 		"-hls_flags", "independent_segments",
 		"-master_pl_name", masterPlaylist,
 		"-hls_segment_filename", filepath.Join(hlsDir, "v%v_segment%03d.ts"),
-		"-var_stream_map", "v:0,a:0 v:1,a:1 v:2,a:2 v:3,a:3 v:4,a:4 v:5,a:5",
+		"-var_stream_map", strings.TrimSpace(varStreamMap),
 		filepath.Join(hlsDir, "v%v.m3u8"),
 	)
+
+	cmd := exec.Command("ffmpeg", args...)
 	// Capture output for debugging
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
