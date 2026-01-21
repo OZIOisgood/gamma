@@ -8,11 +8,11 @@
 - [ ] CONTRIBUTING file
 - [ ] Client player
 - [ ] Preview GIFs
-- [ ] Thumbnails
 - [ ] SDKs for popular languages
 - [ ] CORS configuration
 - [ ] Webhooks
 - [ ] DRM
 - [ ] Test flag on asset (watermark + 10s limit + auto-delete after 24h)
 - [ ] Metadata support: title, creator_id, external_id
-- [x] Add common issues instructions to constitution
+- [ ] `chevrons-up-down.svg` error in dashboard logs
+- [ ] Implement DAG for optimised video processing flow

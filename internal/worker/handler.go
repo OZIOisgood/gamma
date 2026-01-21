@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/OZIOisgood/gamma/internal/db"
@@ -21,8 +22,9 @@ import (
 
 type ProbeData struct {
 	Streams []struct {
-		Width  int `json:"width"`
-		Height int `json:"height"`
+		Width    int    `json:"width"`
+		Height   int    `json:"height"`
+		Duration string `json:"duration"`
 	} `json:"streams"`
 }
 
@@ -60,29 +62,35 @@ func NewHandler(queries *db.Queries, storage *storage.Storage, eventBus *events.
 	}
 }
 
-func (h *Handler) getVideoDimensions(filePath string) (int, int, error) {
+func (h *Handler) getVideoMetadata(filePath string) (int, int, float64, error) {
 	cmd := exec.Command("ffprobe",
 		"-v", "error",
 		"-select_streams", "v:0",
-		"-show_entries", "stream=width,height",
+		"-show_entries", "stream=width,height,duration",
 		"-of", "json",
 		filePath,
 	)
 	output, err := cmd.Output()
 	if err != nil {
-		return 0, 0, err
+		return 0, 0, 0, err
 	}
 
 	var data ProbeData
 	if err := json.Unmarshal(output, &data); err != nil {
-		return 0, 0, err
+		return 0, 0, 0, err
 	}
 
 	if len(data.Streams) == 0 {
-		return 0, 0, fmt.Errorf("no video streams found")
+		return 0, 0, 0, fmt.Errorf("no video streams found")
 	}
 
-	return data.Streams[0].Width, data.Streams[0].Height, nil
+	duration, err := strconv.ParseFloat(data.Streams[0].Duration, 64)
+	if err != nil {
+		// Fallback if duration is missing or invalid, though unlikely for valid video
+		duration = 0
+	}
+
+	return data.Streams[0].Width, data.Streams[0].Height, duration, nil
 }
 
 func (h *Handler) HandleUploadEvent(msg *nats.Msg) {
@@ -114,6 +122,55 @@ func (h *Handler) HandleUploadEvent(msg *nats.Msg) {
 	}
 
 	msg.Ack()
+}
+
+func (h *Handler) generateThumbnails(ctx context.Context, inputPath, outputDir string, duration float64) (string, error) {
+	thumbDir := filepath.Join(outputDir, "thumbnails")
+	if err := os.MkdirAll(thumbDir, 0755); err != nil {
+		return "", fmt.Errorf("failed to create thumbnails dir: %w", err)
+	}
+
+	// Generate thumbnails every 10 seconds
+	// Scale to width 160, keep aspect ratio
+	cmd := exec.Command("ffmpeg",
+		"-i", inputPath,
+		"-vf", "fps=1/10,scale=160:-1",
+		filepath.Join(thumbDir, "thumb%03d.jpg"),
+	)
+
+	if err := cmd.Run(); err != nil {
+		return "", fmt.Errorf("ffmpeg thumbnails failed: %w", err)
+	}
+
+	// Generate VTT file
+	vttPath := filepath.Join(thumbDir, "thumbnails.vtt")
+	f, err := os.Create(vttPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to create vtt file: %w", err)
+	}
+	defer f.Close()
+
+	f.WriteString("WEBVTT\n\n")
+
+	// List generated files
+	files, err := filepath.Glob(filepath.Join(thumbDir, "thumb*.jpg"))
+	if err != nil {
+		return "", fmt.Errorf("failed to list thumbnails: %w", err)
+	}
+
+	for i := range files {
+		start := i * 10
+		end := (i + 1) * 10
+
+		// Format time as HH:MM:SS.mmm
+		startTime := fmt.Sprintf("%02d:%02d:%02d.000", start/3600, (start%3600)/60, start%60)
+		endTime := fmt.Sprintf("%02d:%02d:%02d.000", end/3600, (end%3600)/60, end%60)
+
+		f.WriteString(fmt.Sprintf("%s --> %s\n", startTime, endTime))
+		f.WriteString(fmt.Sprintf("thumb%03d.jpg\n\n", i+1))
+	}
+
+	return "thumbnails/thumbnails.vtt", nil
 }
 
 func (h *Handler) processVideo(ctx context.Context, key string) error {
@@ -151,12 +208,12 @@ func (h *Handler) processVideo(ctx context.Context, key string) error {
 		return fmt.Errorf("failed to download file: %w", err)
 	}
 
-	// Get video dimensions
-	width, height, err := h.getVideoDimensions(localInput)
+	// Get video metadata
+	width, height, duration, err := h.getVideoMetadata(localInput)
 	if err != nil {
-		return fmt.Errorf("failed to get video dimensions: %w", err)
+		return fmt.Errorf("failed to get video metadata: %w", err)
 	}
-	log.Printf("Input video dimensions: %dx%d", width, height)
+	log.Printf("Input video dimensions: %dx%d, duration: %f", width, height, duration)
 
 	// Filter qualities
 	var targetQualities []Quality
@@ -175,6 +232,12 @@ func (h *Handler) processVideo(ctx context.Context, key string) error {
 	hlsDir := filepath.Join(tmpDir, "hls", assetID.String())
 	if err := os.MkdirAll(hlsDir, 0755); err != nil {
 		return fmt.Errorf("failed to create hls dir: %w", err)
+	}
+
+	// Generate Thumbnails
+	vttRelPath, err := h.generateThumbnails(ctx, localInput, hlsDir, duration)
+	if err != nil {
+		log.Printf("Failed to generate thumbnails: %v", err)
 	}
 
 	// Run ffmpeg with multi-quality support
@@ -254,6 +317,10 @@ func (h *Handler) processVideo(ctx context.Context, key string) error {
 			contentType = "application/vnd.apple.mpegurl"
 		} else if strings.HasSuffix(path, ".ts") {
 			contentType = "video/mp2t"
+		} else if strings.HasSuffix(path, ".vtt") {
+			contentType = "text/vtt"
+		} else if strings.HasSuffix(path, ".jpg") {
+			contentType = "image/jpeg"
 		}
 
 		if err := h.Storage.UploadFile(ctx, s3Key, path, contentType); err != nil {
@@ -273,12 +340,18 @@ func (h *Handler) processVideo(ctx context.Context, key string) error {
 
 	hlsRoot := filepath.Join(realmPrefix, "hls", assetID.String(), "master.m3u8")
 
+	var thumbnailRoot pgtype.Text
+	if vttRelPath != "" {
+		thumbnailRoot.Scan(filepath.Join(realmPrefix, "hls", assetID.String(), vttRelPath))
+	}
+
 	_, err = h.Queries.CreateAsset(ctx, db.CreateAssetParams{
-		ID:       pgAssetID,
-		UploadID: pgUploadID,
-		RealmID:  upload.RealmID,
-		HlsRoot:  hlsRoot,
-		Status:   db.AssetStatusReady,
+		ID:            pgAssetID,
+		UploadID:      pgUploadID,
+		RealmID:       upload.RealmID,
+		HlsRoot:       hlsRoot,
+		ThumbnailRoot: thumbnailRoot,
+		Status:        db.AssetStatusReady,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create asset: %w", err)

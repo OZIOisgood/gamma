@@ -38,6 +38,7 @@ export class AssetDetailComponent implements OnInit, OnDestroy {
   
   asset = signal<Asset | null>(null);
   playlistUrl = signal<string>('');
+  thumbnailUrl = signal<string>('');
   loading = signal(true);
   error = signal<string | null>(null);
   
@@ -46,12 +47,11 @@ export class AssetDetailComponent implements OnInit, OnDestroy {
     const asset = this.asset();
     if (!asset) return [];
     return [
-      { label: 'ID', value: asset.ID },
-      { label: 'Status', value: asset.Status, type: 'status' as const },
-      { label: 'Upload ID', value: asset.UploadID },
-      { label: 'Created At', value: asset.CreatedAt, type: 'date' as const },
-      { label: 'Updated At', value: asset.UpdatedAt, type: 'date' as const },
-      { label: 'HLS Root', value: asset.HlsRoot }
+      { label: 'ID', value: asset.id },
+      { label: 'Status', value: asset.status, type: 'status' as const },
+      { label: 'Upload ID', value: asset.upload_id },
+      { label: 'Created At', value: asset.created_at, type: 'date' as const },
+      { label: 'HLS Root', value: asset.hls_root }
     ];
   });
 
@@ -93,7 +93,7 @@ export class AssetDetailComponent implements OnInit, OnDestroy {
   }
 
   isReady(asset: Asset): boolean {
-    return asset.Status.toLowerCase() === 'ready';
+    return asset.status.toLowerCase() === 'ready';
   }
 
   getStatusAppearance(status: string): string {
@@ -110,6 +110,9 @@ export class AssetDetailComponent implements OnInit, OnDestroy {
       next: (response) => {
         this.loading.set(false);
         this.playlistUrl.set(response.url);
+        if (response.thumbnail_url) {
+          this.thumbnailUrl.set(response.thumbnail_url);
+        }
       },
       error: (err) => {
         console.error('Failed to get playlist', err);
@@ -130,7 +133,7 @@ export class AssetDetailComponent implements OnInit, OnDestroy {
       cancelText: 'Cancel'
     }).subscribe(confirmed => {
       if (confirmed) {
-        this.assetsService.deleteAsset(realm, asset.ID).subscribe({
+        this.assetsService.deleteAsset(realm, asset.id).subscribe({
           next: () => {
             this.router.navigate(['/', realm, 'dashboard']);
           },

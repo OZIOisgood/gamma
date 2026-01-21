@@ -144,14 +144,15 @@ func (ns NullUploadStatus) Value() (driver.Value, error) {
 }
 
 type Asset struct {
-	ID        pgtype.UUID
-	UploadID  pgtype.UUID
-	RealmID   pgtype.UUID
-	HlsRoot   string
-	Status    AssetStatus
-	CreatedAt pgtype.Timestamptz
-	UpdatedAt pgtype.Timestamptz
-	DeletedAt pgtype.Timestamptz
+	ID            pgtype.UUID
+	UploadID      pgtype.UUID
+	RealmID       pgtype.UUID
+	HlsRoot       string
+	ThumbnailRoot pgtype.Text
+	Status        AssetStatus
+	CreatedAt     pgtype.Timestamptz
+	UpdatedAt     pgtype.Timestamptz
+	DeletedAt     pgtype.Timestamptz
 }
 
 type Realm struct {

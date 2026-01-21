@@ -1,11 +1,19 @@
 <div class="video-container">
   <media-controller class="gamma-theme">
-    <hls-video
+    <video
+      #video
       slot="media"
-      [src]="src()"
       crossorigin
       playsinline
-    ></hls-video>
+    >
+      <track
+        *ngIf="thumbnailSrc()"
+        default
+        label="thumbnails"
+        kind="metadata"
+        [src]="thumbnailSrc()"
+      />
+    </video>
     
     <media-settings-menu hidden anchor="auto">
       <media-settings-menu-item>

@@ -1,6 +1,6 @@
 -- name: CreateAsset :one
-INSERT INTO assets (id, upload_id, realm_id, hls_root, status)
-VALUES ($1, $2, $3, $4, $5)
+INSERT INTO assets (id, upload_id, realm_id, hls_root, thumbnail_root, status)
+VALUES ($1, $2, $3, $4, $5, $6)
 RETURNING *;
 
 -- name: GetAsset :one

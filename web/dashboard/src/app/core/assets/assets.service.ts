@@ -12,16 +12,18 @@ export interface Upload {
 }
 
 export interface Asset {
-  ID: string;
-  UploadID: string;
-  HlsRoot: string;
-  Status: string;
-  CreatedAt: string;
-  UpdatedAt: string;
+  id: string;
+  upload_id: string;
+  realm_id: string;
+  hls_root: string;
+  thumbnail_root?: string;
+  status: string;
+  created_at: string;
 }
 
 export interface PlaylistResponse {
   url: string;
+  thumbnail_url?: string;
 }
 
 @Injectable({

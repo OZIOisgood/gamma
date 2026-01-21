@@ -40,6 +40,33 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Get("/assets/{id}/playlist", h.GetAssetPlaylist)
 }
 
+type AssetResponse struct {
+	ID            pgtype.UUID        `json:"id"`
+	UploadID      pgtype.UUID        `json:"upload_id"`
+	RealmID       pgtype.UUID        `json:"realm_id"`
+	HlsRoot       string             `json:"hls_root"`
+	ThumbnailRoot *string            `json:"thumbnail_root,omitempty"`
+	Status        db.AssetStatus     `json:"status"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+}
+
+func toAssetResponse(a db.Asset) AssetResponse {
+	var thumbRoot *string
+	if a.ThumbnailRoot.Valid {
+		s := a.ThumbnailRoot.String
+		thumbRoot = &s
+	}
+	return AssetResponse{
+		ID:            a.ID,
+		UploadID:      a.UploadID,
+		RealmID:       a.RealmID,
+		HlsRoot:       a.HlsRoot,
+		ThumbnailRoot: thumbRoot,
+		Status:        a.Status,
+		CreatedAt:     a.CreatedAt,
+	}
+}
+
 func (h *Handler) ListAssets(w http.ResponseWriter, r *http.Request) {
 	realmName := chi.URLParam(r, "realm")
 	if realmName == "" {
@@ -59,8 +86,13 @@ func (h *Handler) ListAssets(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	response := make([]AssetResponse, len(assets))
+	for i, asset := range assets {
+		response[i] = toAssetResponse(asset)
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(assets)
+	json.NewEncoder(w).Encode(response)
 }
 
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
@@ -202,11 +234,12 @@ func (h *Handler) GetAsset(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(asset)
+	json.NewEncoder(w).Encode(toAssetResponse(asset))
 }
 
 type GetAssetPlaylistResponse struct {
-	URL string `json:"url"`
+	URL          string `json:"url"`
+	ThumbnailURL string `json:"thumbnail_url,omitempty"`
 }
 
 func (h *Handler) GetAssetPlaylist(w http.ResponseWriter, r *http.Request) {
@@ -250,8 +283,22 @@ func (h *Handler) GetAssetPlaylist(w http.ResponseWriter, r *http.Request) {
 	u.RawQuery = ""
 	finalURL := u.String()
 
+	var thumbnailURL string
+	if asset.ThumbnailRoot.Valid {
+		thumbKey := asset.ThumbnailRoot.String
+		thumbPresigned, err := h.Storage.GeneratePresignedGetURL(r.Context(), thumbKey)
+		if err == nil {
+			tu, err := url.Parse(thumbPresigned)
+			if err == nil {
+				tu.RawQuery = ""
+				thumbnailURL = tu.String()
+			}
+		}
+	}
+
 	resp := GetAssetPlaylistResponse{
-		URL: finalURL,
+		URL:          finalURL,
+		ThumbnailURL: thumbnailURL,
 	}
 
 	w.Header().Set("Content-Type", "application/json")

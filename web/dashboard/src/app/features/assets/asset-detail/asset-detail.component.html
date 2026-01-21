@@ -2,7 +2,7 @@
   <tui-loader [overlay]="true" [showLoader]="loading()">
     <div *ngIf="asset() as asset" class="content">
       <header class="page-header">
-        <h1 class="page-title">Asset #{{ getShortId(asset.ID) }}</h1>
+        <h1 class="page-title">Asset #{{ getShortId(asset.id) }}</h1>
         <button 
           tuiButton 
           appearance="accent" 
@@ -16,7 +16,7 @@
 
       <div class="details-grid">
         <div class="player-card" *ngIf="isReady(asset)">
-          <app-player [src]="playlistUrl()"></app-player>
+          <app-player [src]="playlistUrl()" [thumbnailSrc]="thumbnailUrl()"></app-player>
         </div>
         
         <div class="player-card" *ngIf="!isReady(asset)">
@@ -30,8 +30,8 @@
                 <td *tuiCell="'label'" tuiTd class="label-cell">{{ item.label }}</td>
                 <td *tuiCell="'value'" tuiTd>
                   <ng-container [ngSwitch]="item.type">
-                    <tui-badge *ngSwitchCase="'status'" [appearance]="getStatusAppearance(asset.Status)" tuiStatus>
-                      {{ asset.Status }}
+                    <tui-badge *ngSwitchCase="'status'" [appearance]="getStatusAppearance(asset.status)" tuiStatus>
+                      {{ asset.status }}
                     </tui-badge>
                     <span *ngSwitchCase="'date'">{{ item.value | date:'medium' }}</span>
                     <span *ngSwitchDefault class="break-all">{{ item.value }}</span>
